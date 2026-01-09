@@ -202,7 +202,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
         data.put("metodePembayaran", etPembayaran.getText().toString());
         data.put("total", parseDouble(tvTotal.getText().toString()));
         data.put("userId", user.getUid());
-        data.put("createdAt", FieldValue.serverTimestamp());
+        data.put("createdAt", new java.util.Date());
 
         List<Map<String, Object>> items = new ArrayList<>();
         for (ItemInvoice item : listInvoice) {
