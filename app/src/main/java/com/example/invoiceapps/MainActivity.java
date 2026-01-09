@@ -1,15 +1,14 @@
 package com.example.invoiceapps;
 
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.firebase.auth.FirebaseAuth;
@@ -22,60 +21,71 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerViewInvoices;
-    private InvoiceHistoryAdapter adapter;
-    private List<Invoice> invoiceList;
-    private FloatingActionButton fabAddInvoice;
+    private RecyclerView recyclerView;
     private ProgressBar progressBar;
+    private FloatingActionButton fab;
+
+    private InvoiceHistoryAdapter adapter;
+    private final List<Invoice> invoiceList = new ArrayList<>();
 
     private FirebaseFirestore db;
     private FirebaseUser user;
+    private ListenerRegistration listener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        recyclerViewInvoices = findViewById(R.id.recyclerViewInvoices);
-        fabAddInvoice = findViewById(R.id.fabAddInvoice);
+        recyclerView = findViewById(R.id.recyclerViewInvoices);
         progressBar = findViewById(R.id.progressBar);
+        fab = findViewById(R.id.fabAddInvoice);
 
-        recyclerViewInvoices.setLayoutManager(new LinearLayoutManager(this));
-        invoiceList = new ArrayList<>();
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
         adapter = new InvoiceHistoryAdapter(invoiceList, this);
-        recyclerViewInvoices.setAdapter(adapter);
+        recyclerView.setAdapter(adapter);
 
         db = FirebaseFirestore.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
 
-        fabAddInvoice.setOnClickListener(v ->
-                startActivity(new Intent(this, AddInvoiceActivity.class))
-        );
+        fab.setOnClickListener(v ->
+                startActivity(new Intent(this, AddInvoiceActivity.class)));
 
         loadInvoices();
     }
 
     private void loadInvoices() {
-        if (user == null) return;
+        if (user == null) {
+            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         progressBar.setVisibility(View.VISIBLE);
 
-        db.collection("invoices")
+        listener = db.collection("invoices")
                 .whereEqualTo("userId", user.getUid())
                 .orderBy("createdAt", Query.Direction.DESCENDING)
-                .addSnapshotListener((value, error) -> {
+                .addSnapshotListener((snapshots, e) -> {
 
                     progressBar.setVisibility(View.GONE);
-                    if (error != null) return;
+
+                    if (e != null) {
+                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        return;
+                    }
 
                     invoiceList.clear();
-                    for (DocumentSnapshot doc : value.getDocuments()) {
+
+                    if (snapshots == null) return;
+
+                    for (DocumentSnapshot doc : snapshots) {
 
                         Invoice invoice = new Invoice(
                                 doc.getString("noInvoice"),
                                 doc.getString("namaCustomer"),
                                 doc.getString("tanggal"),
-                                doc.getDouble("total") != null ? doc.getDouble("total") : 0
+                                doc.getDouble("total") != null
+                                        ? doc.getDouble("total") : 0
                         );
 
                         invoice.setId(doc.getId());
@@ -85,18 +95,29 @@ public class MainActivity extends AppCompatActivity {
 
                         if (items != null) {
                             for (Map<String, Object> map : items) {
+                                Number qty = (Number) map.get("qty");
+                                Number harga = (Number) map.get("hargaSatuan");
+                                Number diskon = (Number) map.get("diskon");
+
                                 invoice.addItem(new ItemInvoice(
                                         (String) map.get("namaBarang"),
-                                        ((Long) map.get("qty")).intValue(),
-                                        (Double) map.get("hargaSatuan"),
-                                        (Double) map.get("diskon")
+                                        qty != null ? qty.intValue() : 0,
+                                        harga != null ? harga.doubleValue() : 0,
+                                        diskon != null ? diskon.doubleValue() : 0
                                 ));
                             }
                         }
 
                         invoiceList.add(invoice);
                     }
+
                     adapter.notifyDataSetChanged();
                 });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (listener != null) listener.remove();
     }
 }

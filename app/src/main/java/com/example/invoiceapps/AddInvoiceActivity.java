@@ -203,6 +203,13 @@ public class AddInvoiceActivity extends AppCompatActivity {
         data.put("total", parseDouble(tvTotal.getText().toString()));
         data.put("userId", user.getUid());
         data.put("createdAt", new java.util.Date());
+        data.put("subTotal", parseDouble(tvSubTotal.getText().toString()));
+        data.put("totalDiskon", parseDouble(tvDiskonTotal.getText().toString()));
+        data.put("pajak", etPajak.getText().toString().isEmpty() ? 0 :
+                Double.parseDouble(etPajak.getText().toString()));
+        data.put("biayaPengiriman", etBiayaPengiriman.getText().toString().isEmpty() ? 0 :
+                Double.parseDouble(etBiayaPengiriman.getText().toString()));
+
 
         List<Map<String, Object>> items = new ArrayList<>();
         for (ItemInvoice item : listInvoice) {

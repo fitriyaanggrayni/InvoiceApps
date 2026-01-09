@@ -12,10 +12,11 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class InvoiceHistoryAdapter extends RecyclerView.Adapter<InvoiceHistoryAdapter.ViewHolder> {
+public class InvoiceHistoryAdapter
+        extends RecyclerView.Adapter<InvoiceHistoryAdapter.ViewHolder> {
 
-    private List<Invoice> invoiceList;
-    private Context context;
+    private final List<Invoice> invoiceList;
+    private final Context context;
 
     public InvoiceHistoryAdapter(List<Invoice> invoiceList, Context context) {
         this.invoiceList = invoiceList;
@@ -24,14 +25,20 @@ public class InvoiceHistoryAdapter extends RecyclerView.Adapter<InvoiceHistoryAd
 
     @NonNull
     @Override
-    public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ViewHolder onCreateViewHolder(
+            @NonNull ViewGroup parent,
+            int viewType
+    ) {
         View view = LayoutInflater.from(parent.getContext())
                 .inflate(R.layout.item_invoice_history, parent, false);
         return new ViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+    public void onBindViewHolder(
+            @NonNull ViewHolder holder,
+            int position
+    ) {
         Invoice invoice = invoiceList.get(position);
 
         holder.tvNoInvoice.setText(invoice.getNoInvoice());
@@ -40,7 +47,7 @@ public class InvoiceHistoryAdapter extends RecyclerView.Adapter<InvoiceHistoryAd
 
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, InvoiceDetailActivity.class);
-            intent.putExtra("invoice", invoice);
+            intent.putExtra("invoiceId", invoice.getId()); // 🔥 WAJIB INI
             context.startActivity(intent);
         });
     }
