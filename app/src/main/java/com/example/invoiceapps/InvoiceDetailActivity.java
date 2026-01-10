@@ -81,14 +81,13 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             if (invoice == null) return;
 
             File pdf = generatePdf();
-            if (pdf != null) {
+            if (pdf != null && pdf.exists()) {
                 Toast.makeText(
                         this,
-                        "Invoice berhasil diunduh\n" + pdf.getAbsolutePath(),
+                        "Invoice berhasil diunduh di:\n" + pdf.getAbsolutePath(),
                         Toast.LENGTH_LONG
                 ).show();
 
-                // SHARE PDF VIA FILE PROVIDER
                 try {
                     Uri uri = FileProvider.getUriForFile(
                             this,
@@ -96,20 +95,20 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                             pdf
                     );
 
-                    Intent intent = new Intent(Intent.ACTION_SEND);
-                    intent.setType("application/pdf");
-                    intent.putExtra(Intent.EXTRA_STREAM, uri);
+                    Intent intent = new Intent(Intent.ACTION_VIEW);
+                    intent.setDataAndType(uri, "application/pdf");
                     intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                    startActivity(Intent.createChooser(intent, "Bagikan Invoice PDF"));
+                    startActivity(Intent.createChooser(intent, "Buka PDF dengan"));
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(this, "Gagal membagikan PDF", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
                 }
             } else {
                 Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
             }
         });
+
     }
 
     private void initViews() {
@@ -242,12 +241,21 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         // LOGO
         if (logoUri != null) {
+            InputStream is = null;
             try {
-                InputStream is = getContentResolver().openInputStream(logoUri);
+                is = getContentResolver().openInputStream(logoUri);
                 Bitmap logo = BitmapFactory.decodeStream(is);
-                Bitmap scaled = Bitmap.createScaledBitmap(logo, 70, 70, false);
-                canvas.drawBitmap(scaled, 40, y, normal);
-            } catch (Exception ignored) {}
+                if (logo != null) {
+                    Bitmap scaled = Bitmap.createScaledBitmap(logo, 70, 70, false);
+                    canvas.drawBitmap(scaled, 40, y, normal);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                if (is != null) {
+                    try { is.close(); } catch (Exception ignored) {}
+                }
+            }
         }
 
         // INFO TOKO
@@ -257,7 +265,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(alamatToko, 120, y + 38, normal);
         canvas.drawText("Telp: " + telpToko, 120, y + 54, normal);
 
-        // JUDUL
+        // JUDUL INVOICE
         bold.setTextSize(22);
         canvas.drawText("INVOICE", 420, y + 40, bold);
 
@@ -274,6 +282,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 20;
         canvas.drawLine(40, y, 555, y, line);
 
+        // TABLE HEADER
         y += 25;
         canvas.drawText("Barang", 40, y, tableHeader);
         canvas.drawText("Qty", 240, y, tableHeader);
@@ -302,6 +311,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 10;
         canvas.drawLine(330, y, 555, y, line);
 
+        // SUMMARY
         y += 20;
         drawSummary(canvas, "Sub Total", invoice.getSubTotal(), y);
         y += 18;
@@ -339,22 +349,28 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         pdf.finishPage(page);
 
-        File folder = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Invoice Apps");
+        // --- SIMPAN PDF KE FOLDER PUBLIK ---
+        File folder = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
+                "Invoice Apps"
+        );
         if (!folder.exists()) folder.mkdirs();
 
         File file = new File(folder, "Invoice_" + invoice.getNoInvoice() + ".pdf");
 
         try {
-            pdf.writeTo(new FileOutputStream(file));
+            pdf.writeTo(new FileOutputStream(file)); // menulis PDF
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         } finally {
-            pdf.close();
+            pdf.close(); // tutup dokumen
         }
 
         return file;
+
     }
+
 
     private double getDouble(DocumentSnapshot doc, String key) {
         Double v = doc.getDouble(key);
