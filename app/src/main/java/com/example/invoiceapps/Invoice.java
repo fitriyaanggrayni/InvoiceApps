@@ -17,29 +17,29 @@ public class Invoice implements Serializable {
 
     private double subTotal;
     private double totalDiskon;
-    private double pajak;          // persen
+    private double pajak;
     private double biayaPengiriman;
     private double total;
 
+    private double nilaiPajak;
     private Date createdAt;
 
+    private Company company; // ✅ TAMBAHKAN DI SINI
     private List<ItemInvoice> items = new ArrayList<>();
 
-    // ===== EMPTY CONSTRUCTOR (Firestore) =====
+    // ===== CONSTRUCTOR =====
     public Invoice() {}
 
-    // ===== BASIC CONSTRUCTOR =====
-    public Invoice(String noInvoice, String namaCustomer, String tanggal, double total) {
+    public Invoice(String noInvoice, String namaCustomer,
+                   String tanggal, double total) {
         this.noInvoice = noInvoice;
         this.namaCustomer = namaCustomer;
         this.tanggal = tanggal;
         this.total = total;
     }
 
-    // ===== GETTER & SETTER =====
+    // ===== GETTER =====
     public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
-
     public String getNoInvoice() { return noInvoice; }
     public String getNamaCustomer() { return namaCustomer; }
     public String getNoTelepon() { return noTelepon; }
@@ -52,12 +52,17 @@ public class Invoice implements Serializable {
     public double getPajak() { return pajak; }
     public double getBiayaPengiriman() { return biayaPengiriman; }
     public double getTotal() { return total; }
+    public double getNilaiPajak() { return nilaiPajak; }
 
     public Date getCreatedAt() { return createdAt; }
-
     public List<ItemInvoice> getItems() { return items; }
-    public void setItems(List<ItemInvoice> items) { this.items = items; }
+    public Company getCompany() { return company; } // ✅
 
+    // ===== SETTER =====
+    public void setId(String id) { this.id = id; }
+    public void setNoInvoice(String noInvoice) { this.noInvoice = noInvoice; }
+    public void setNamaCustomer(String namaCustomer) { this.namaCustomer = namaCustomer; }
+    public void setTanggal(String tanggal) { this.tanggal = tanggal; }
     public void setNoTelepon(String noTelepon) { this.noTelepon = noTelepon; }
     public void setAlamat(String alamat) { this.alamat = alamat; }
     public void setMetodePembayaran(String metodePembayaran) { this.metodePembayaran = metodePembayaran; }
@@ -67,12 +72,18 @@ public class Invoice implements Serializable {
     public void setPajak(double pajak) { this.pajak = pajak; }
     public void setBiayaPengiriman(double biayaPengiriman) { this.biayaPengiriman = biayaPengiriman; }
     public void setTotal(double total) { this.total = total; }
+    public void setNilaiPajak(double nilaiPajak) { this.nilaiPajak = nilaiPajak; }
     public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
-    // ===== ADD ITEM (WAJIB) =====
+
+    public void setItems(List<ItemInvoice> items) {
+        this.items = items;
+    }
+
     public void addItem(ItemInvoice item) {
-        if (items == null) {
-            items = new ArrayList<>();
-        }
         items.add(item);
+    }
+
+    public void setCompany(Company company) { // ✅
+        this.company = company;
     }
 }

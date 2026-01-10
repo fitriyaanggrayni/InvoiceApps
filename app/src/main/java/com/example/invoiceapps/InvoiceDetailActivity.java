@@ -23,6 +23,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,8 +42,16 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
     private FirebaseFirestore db;
     private String invoiceId;
-
     private NumberFormat rupiahFormat;
+
+    private String jenisPembayaran = "-";
+    private String namaAdmin = "Administrator";
+    private String namaPenerima = "Penerima";
+
+    private Uri logoUri;
+    private String namaToko = "";
+    private String alamatToko = "";
+    private String telpToko = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,20 +68,50 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         invoiceId = getIntent().getStringExtra("invoiceId");
         if (invoiceId == null) {
+            Toast.makeText(this, "Invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
+
+        logoUri = getIntent().getParcelableExtra("logoUri");
 
         loadInvoiceDetail();
 
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
+
             File pdf = generatePdf();
-            if (pdf != null) openPdf(pdf);
+            if (pdf != null) {
+                Toast.makeText(
+                        this,
+                        "Invoice berhasil diunduh\n" + pdf.getAbsolutePath(),
+                        Toast.LENGTH_LONG
+                ).show();
+
+                // SHARE PDF VIA FILE PROVIDER
+                try {
+                    Uri uri = FileProvider.getUriForFile(
+                            this,
+                            getPackageName() + ".provider",
+                            pdf
+                    );
+
+                    Intent intent = new Intent(Intent.ACTION_SEND);
+                    intent.setType("application/pdf");
+                    intent.putExtra(Intent.EXTRA_STREAM, uri);
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                    startActivity(Intent.createChooser(intent, "Bagikan Invoice PDF"));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Toast.makeText(this, "Gagal membagikan PDF", Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
+            }
         });
     }
 
-    // ================= INIT =================
     private void initViews() {
         tvNoInvoice = findViewById(R.id.tvNoInvoice);
         tvNamaCustomer = findViewById(R.id.tvNamaCustomer);
@@ -89,13 +128,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         rvDetailBarang.setAdapter(adapter);
     }
 
-    // ================= SAFE GETTER =================
-    private double getDoubleSafe(DocumentSnapshot doc, String field) {
-        Double value = doc.getDouble(field);
-        return value != null ? value : 0;
-    }
-
-    // ================= LOAD DATA =================
     private void loadInvoiceDetail() {
         db.collection("invoices")
                 .document(invoiceId)
@@ -110,17 +142,37 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                             0
                     );
 
-                    invoice.setPajak(getDoubleSafe(doc, "pajak"));
-                    invoice.setBiayaPengiriman(getDoubleSafe(doc, "biayaPengiriman"));
+                    invoice.setPajak(getDouble(doc, "pajak"));
+                    invoice.setBiayaPengiriman(getDouble(doc, "biayaPengiriman"));
 
-                    List<Map<String, Object>> items =
-                            (List<Map<String, Object>>) doc.get("items");
+                    jenisPembayaran = safeString(doc, "metodePembayaran", "-");
+                    namaAdmin = safeString(doc, "namaAdmin", "Administrator");
+                    namaPenerima = safeString(doc, "namaPenerima", "Penerima");
 
+                    // COMPANY PER INVOICE
+                    Map<String, Object> companyMap = (Map<String, Object>) doc.get("company");
+                    if (companyMap != null) {
+                        Company company = new Company(
+                                getMapString(companyMap, "namaUsaha"),
+                                getMapString(companyMap, "alamat"),
+                                getMapString(companyMap, "telp"),
+                                getMapString(companyMap, "logoUri")
+                        );
+
+                        invoice.setCompany(company);
+
+                        // Set info toko untuk PDF
+                        namaToko = company.getNamaUsaha();
+                        alamatToko = company.getAlamat();
+                        telpToko = company.getTelp();
+                        logoUri = company.getLogoUri() != null ? Uri.parse(company.getLogoUri()) : null;
+                    }
+
+                    // ITEMS
+                    List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
                     itemList.clear();
-
                     if (items != null) {
                         for (Map<String, Object> map : items) {
-
                             Number qty = (Number) map.get("qty");
                             Number harga = (Number) map.get("hargaSatuan");
                             Number diskon = (Number) map.get("diskon");
@@ -135,9 +187,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     }
 
                     invoice.setItems(itemList);
-                    calculateInvoiceSummary();
+                    hitungInvoice();
 
-                    // ===== UI =====
                     tvNoInvoice.setText(invoice.getNoInvoice());
                     tvNamaCustomer.setText(invoice.getNamaCustomer());
                     tvTanggal.setText(invoice.getTanggal());
@@ -147,66 +198,72 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 });
     }
 
-    // ================= CALCULATION =================
-    private void calculateInvoiceSummary() {
+    private void hitungInvoice() {
         double subTotal = 0;
         double totalDiskon = 0;
 
         for (ItemInvoice item : invoice.getItems()) {
-            double hargaKotor = item.getQty() * item.getHargaSatuan();
-            double diskonItem = hargaKotor * (item.getDiskon() / 100);
-
-            subTotal += hargaKotor;
-            totalDiskon += diskonItem;
+            double kotor = item.getQty() * item.getHargaSatuan();
+            double diskon = kotor * (item.getDiskon() / 100);
+            subTotal += kotor;
+            totalDiskon += diskon;
         }
 
         double setelahDiskon = subTotal - totalDiskon;
         double pajakNilai = setelahDiskon * (invoice.getPajak() / 100);
-        double totalAkhir = setelahDiskon + pajakNilai + invoice.getBiayaPengiriman();
+        double total = setelahDiskon + pajakNilai + invoice.getBiayaPengiriman();
 
         invoice.setSubTotal(subTotal);
         invoice.setTotalDiskon(totalDiskon);
-        invoice.setTotal(totalAkhir);
+        invoice.setNilaiPajak(pajakNilai);
+        invoice.setTotal(total);
     }
 
-    // ================= PDF =================
     private File generatePdf() {
-
         PdfDocument pdf = new PdfDocument();
-        Paint paint = new Paint();
+        Paint normal = new Paint();
         Paint bold = new Paint();
         Paint line = new Paint();
+        Paint tableText = new Paint();
+        Paint tableHeader = new Paint();
 
-        bold.setFakeBoldText(true);
+        normal.setTextSize(11);
         bold.setTextSize(12);
-        paint.setTextSize(11);
+        bold.setFakeBoldText(true);
+        tableText.setTextSize(8.5f);
+        tableHeader.setTextSize(9);
+        tableHeader.setFakeBoldText(true);
         line.setStrokeWidth(2);
 
         PdfDocument.Page page =
                 pdf.startPage(new PdfDocument.PageInfo.Builder(595, 842, 1).create());
         Canvas canvas = page.getCanvas();
-
         int y = 40;
 
-        // ===== LOGO =====
-        Bitmap logo = BitmapFactory.decodeResource(getResources(), R.drawable.ic_logo);
-        Bitmap scaledLogo = Bitmap.createScaledBitmap(logo, 80, 80, false);
-        canvas.drawBitmap(scaledLogo, 40, y, paint);
+        // LOGO
+        if (logoUri != null) {
+            try {
+                InputStream is = getContentResolver().openInputStream(logoUri);
+                Bitmap logo = BitmapFactory.decodeStream(is);
+                Bitmap scaled = Bitmap.createScaledBitmap(logo, 70, 70, false);
+                canvas.drawBitmap(scaled, 40, y, normal);
+            } catch (Exception ignored) {}
+        }
 
-        // ===== TITLE =====
+        // INFO TOKO
+        bold.setTextSize(14);
+        canvas.drawText(namaToko, 120, y + 20, bold);
+        normal.setTextSize(11);
+        canvas.drawText(alamatToko, 120, y + 38, normal);
+        canvas.drawText("Telp: " + telpToko, 120, y + 54, normal);
+
+        // JUDUL
         bold.setTextSize(22);
-        canvas.drawText("INVOICE", 420, y + 45, bold);
+        canvas.drawText("INVOICE", 420, y + 40, bold);
 
-        // ===== COMPANY =====
-        paint.setTextSize(11);
-        canvas.drawText("Invoice Apps", 40, y + 95, paint);
-        canvas.drawText("Jl. Contoh Alamat No. 123", 40, y + 110, paint);
-        canvas.drawText("Telp: 0812-xxxx-xxxx", 40, y + 125, paint);
-
-        y += 150;
+        y += 90;
         canvas.drawLine(40, y, 555, y, line);
 
-        // ===== INFO =====
         y += 25;
         drawKeyValue(canvas, "No Invoice", invoice.getNoInvoice(), y);
         y += 18;
@@ -217,69 +274,80 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 20;
         canvas.drawLine(40, y, 555, y, line);
 
-        // ===== TABLE HEADER =====
         y += 25;
-        bold.setTextSize(12);
-        canvas.drawText("Barang", 40, y, bold);
-        canvas.drawText("Qty", 280, y, bold);
-        canvas.drawText("Harga", 330, y, bold);
-        canvas.drawText("Total", 470, y, bold);
+        canvas.drawText("Barang", 40, y, tableHeader);
+        canvas.drawText("Qty", 240, y, tableHeader);
+        canvas.drawText("Harga", 290, y, tableHeader);
+        canvas.drawText("Diskon", 380, y, tableHeader);
+        canvas.drawText("Total", 470, y, tableHeader);
 
         y += 10;
         canvas.drawLine(40, y, 555, y, line);
 
-        // ===== ITEMS =====
-        y += 20;
-        paint.setTextSize(11);
-
+        y += 18;
         for (ItemInvoice item : invoice.getItems()) {
-            double totalItem = item.getQty() * item.getHargaSatuan()
-                    * (1 - item.getDiskon() / 100);
+            double kotor = item.getQty() * item.getHargaSatuan();
+            double diskon = kotor * (item.getDiskon() / 100);
+            double totalItem = kotor - diskon;
 
-            canvas.drawText(item.getNamaBarang(), 40, y, paint);
-            canvas.drawText(String.valueOf(item.getQty()), 280, y, paint);
-            canvas.drawText(rupiah(item.getHargaSatuan()), 330, y, paint);
-            canvas.drawText(rupiah(totalItem), 470, y, paint);
-            y += 18;
+            canvas.drawText(limitText(item.getNamaBarang(), 18), 40, y, tableText);
+            canvas.drawText(String.valueOf(item.getQty()), 240, y, tableText);
+            canvas.drawText(rupiah(item.getHargaSatuan()), 290, y, tableText);
+            canvas.drawText(item.getDiskon() + " %", 380, y, tableText);
+            canvas.drawText(rupiah(totalItem), 470, y, tableText);
+
+            y += 14;
         }
 
         y += 10;
         canvas.drawLine(330, y, 555, y, line);
 
-        // ===== SUMMARY =====
         y += 20;
         drawSummary(canvas, "Sub Total", invoice.getSubTotal(), y);
         y += 18;
         drawSummary(canvas, "Diskon", -invoice.getTotalDiskon(), y);
-
-        double pajakNilai =
-                (invoice.getSubTotal() - invoice.getTotalDiskon())
-                        * (invoice.getPajak() / 100);
-
         y += 18;
-        drawSummary(canvas, "Pajak (" + invoice.getPajak() + "%)", pajakNilai, y);
+        drawSummary(canvas, "Pajak (" + invoice.getPajak() + "%)", invoice.getNilaiPajak(), y);
         y += 18;
         drawSummary(canvas, "Ongkir", invoice.getBiayaPengiriman(), y);
+
+        y += 22;
+        Paint p = new Paint();
+        p.setTextSize(11);
+        canvas.drawText("Jenis Pembayaran", 330, y, p);
+        canvas.drawText(jenisPembayaran, 470, y, p);
+
+        y += 22;
+        canvas.drawLine(330, y, 555, y, line);
 
         y += 22;
         bold.setTextSize(13);
         canvas.drawText("TOTAL", 330, y, bold);
         canvas.drawText(rupiah(invoice.getTotal()), 470, y, bold);
 
+        y += 70;
+        canvas.drawText("Penerima", 100, y, normal);
+        canvas.drawText("Administrator", 400, y, normal);
+
+        y += 60;
+        canvas.drawLine(60, y, 200, y, line);
+        canvas.drawLine(350, y, 520, y, line);
+
+        y += 15;
+        canvas.drawText(namaPenerima, 90, y, normal);
+        canvas.drawText(namaAdmin, 380, y, normal);
+
         pdf.finishPage(page);
 
-        File folder = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                "Invoice Apps"
-        );
+        File folder = new File(getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS), "Invoice Apps");
         if (!folder.exists()) folder.mkdirs();
 
         File file = new File(folder, "Invoice_" + invoice.getNoInvoice() + ".pdf");
 
         try {
             pdf.writeTo(new FileOutputStream(file));
-            Toast.makeText(this, "PDF tersimpan", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
+            e.printStackTrace();
             return null;
         } finally {
             pdf.close();
@@ -288,42 +356,46 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         return file;
     }
 
-    // ================= HELPERS =================
-    private void drawKeyValue(Canvas c, String key, String value, int y) {
-        Paint bold = new Paint();
-        Paint normal = new Paint();
-        bold.setFakeBoldText(true);
-        bold.setTextSize(11);
-        normal.setTextSize(11);
+    private double getDouble(DocumentSnapshot doc, String key) {
+        Double v = doc.getDouble(key);
+        return v != null ? v : 0;
+    }
 
-        c.drawText(key, 40, y, bold);
-        c.drawText(":", 120, y, bold);
-        c.drawText(value, 130, y, normal);
+    private String safeString(DocumentSnapshot doc, String key, String def) {
+        String v = doc.getString(key);
+        return v != null ? v : def;
+    }
+
+    private void drawKeyValue(Canvas c, String key, String value, int y) {
+        Paint b = new Paint();
+        Paint n = new Paint();
+        b.setFakeBoldText(true);
+        b.setTextSize(11);
+        n.setTextSize(11);
+
+        c.drawText(key, 40, y, b);
+        c.drawText(":", 120, y, b);
+        c.drawText(value, 130, y, n);
     }
 
     private void drawSummary(Canvas c, String label, double value, int y) {
-        Paint normal = new Paint();
-        normal.setTextSize(11);
-
-        c.drawText(label, 330, y, normal);
-        c.drawText(rupiah(value), 470, y, normal);
+        Paint p = new Paint();
+        p.setTextSize(11);
+        c.drawText(label, 330, y, p);
+        c.drawText(rupiah(value), 470, y, p);
     }
 
-    private String rupiah(double value) {
-        return rupiahFormat.format(value);
+    private String rupiah(double v) {
+        return rupiahFormat.format(v);
     }
 
-    // ================= OPEN PDF =================
-    private void openPdf(File file) {
-        Uri uri = FileProvider.getUriForFile(
-                this,
-                getPackageName() + ".provider",
-                file
-        );
+    private String limitText(String text, int max) {
+        if (text == null) return "";
+        return text.length() > max ? text.substring(0, max) + "…" : text;
+    }
 
-        Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(uri, "application/pdf");
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-        startActivity(intent);
+    private String getMapString(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        return v != null ? v.toString() : "";
     }
 }

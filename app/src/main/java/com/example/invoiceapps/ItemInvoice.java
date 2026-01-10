@@ -7,8 +7,9 @@ public class ItemInvoice implements Serializable {
     private String namaBarang;
     private int qty;
     private double hargaSatuan;
-    private double diskon;
+    private double diskon; // persen (0 - 100)
 
+    // WAJIB untuk Firebase / Serializable
     public ItemInvoice() {}
 
     public ItemInvoice(String namaBarang, int qty, double hargaSatuan, double diskon) {
@@ -18,8 +19,9 @@ public class ItemInvoice implements Serializable {
         this.diskon = diskon;
     }
 
+    // ===== GETTER =====
     public String getNamaBarang() {
-        return namaBarang;
+        return namaBarang != null ? namaBarang : "";
     }
 
     public int getQty() {
@@ -32,5 +34,14 @@ public class ItemInvoice implements Serializable {
 
     public double getDiskon() {
         return diskon;
+    }
+
+    // ===== HELPER =====
+    public double getTotalHarga() {
+        double total = qty * hargaSatuan;
+        if (diskon > 0) {
+            total = total * (1 - diskon / 100);
+        }
+        return total;
     }
 }

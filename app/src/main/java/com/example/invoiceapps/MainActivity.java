@@ -6,6 +6,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private ListenerRegistration listener;
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -49,12 +50,13 @@ public class MainActivity extends AppCompatActivity {
         user = FirebaseAuth.getInstance().getCurrentUser();
 
         fab.setOnClickListener(v ->
-                startActivity(new Intent(this, AddInvoiceActivity.class)));
+                startActivity(new Intent(MainActivity.this, AddInvoiceActivity.class)));
 
         loadInvoices();
     }
 
     private void loadInvoices() {
+
         if (user == null) {
             Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
             return;
@@ -70,15 +72,20 @@ public class MainActivity extends AppCompatActivity {
                     progressBar.setVisibility(View.GONE);
 
                     if (e != null) {
-                        Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+                        Toast.makeText(MainActivity.this,
+                                "Error: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show();
                         return;
                     }
 
                     invoiceList.clear();
 
-                    if (snapshots == null) return;
+                    if (snapshots == null || snapshots.isEmpty()) {
+                        adapter.notifyDataSetChanged();
+                        return;
+                    }
 
-                    for (DocumentSnapshot doc : snapshots) {
+                    for (DocumentSnapshot doc : snapshots.getDocuments()) {
 
                         Invoice invoice = new Invoice(
                                 doc.getString("noInvoice"),
@@ -90,11 +97,13 @@ public class MainActivity extends AppCompatActivity {
 
                         invoice.setId(doc.getId());
 
+                        // ===== ITEMS =====
                         List<Map<String, Object>> items =
                                 (List<Map<String, Object>>) doc.get("items");
 
                         if (items != null) {
                             for (Map<String, Object> map : items) {
+
                                 Number qty = (Number) map.get("qty");
                                 Number harga = (Number) map.get("hargaSatuan");
                                 Number diskon = (Number) map.get("diskon");
@@ -118,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (listener != null) listener.remove();
+        if (listener != null) {
+            listener.remove();
+        }
     }
 }

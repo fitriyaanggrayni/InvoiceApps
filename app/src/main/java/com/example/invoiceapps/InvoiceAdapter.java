@@ -9,30 +9,41 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.text.NumberFormat;
 import java.util.List;
+import java.util.Locale;
 
 public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHolder> {
 
+    // ===== INTERFACE DELETE =====
     public interface OnItemDeleteListener {
         void onItemDelete(int position);
     }
 
-    private List<ItemInvoice> list;
-    private OnItemDeleteListener listener;
-    private boolean isEditable;
+    private final List<ItemInvoice> list;
+    private final OnItemDeleteListener listener;
+    private final boolean isEditable;
 
+    // Format Rupiah Indonesia
+    private final NumberFormat rupiahFormat =
+            NumberFormat.getNumberInstance(new Locale("id", "ID"));
+
+    // ===== CONSTRUCTOR =====
     public InvoiceAdapter(List<ItemInvoice> list,
                           OnItemDeleteListener listener,
                           boolean isEditable) {
         this.list = list;
         this.listener = listener;
         this.isEditable = isEditable;
+        rupiahFormat.setMaximumFractionDigits(0);
     }
 
-    // ================= UPDATE DATA =================
+    // ===== UPDATE DATA =====
     public void updateData(List<ItemInvoice> newList) {
-        this.list.clear();
-        this.list.addAll(newList);
+        list.clear();
+        if (newList != null) {
+            list.addAll(newList);
+        }
         notifyDataSetChanged();
     }
 
@@ -51,17 +62,25 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         holder.tvNamaBarang.setText(item.getNamaBarang());
         holder.tvQty.setText("Qty: " + item.getQty());
         holder.tvHargaSatuan.setText("Rp " + format(item.getHargaSatuan()));
-        holder.tvDiskon.setText("Diskon: " + item.getDiskon() + "%");
+
+        // Diskon
+        if (item.getDiskon() > 0) {
+            holder.tvDiskon.setVisibility(View.VISIBLE);
+            holder.tvDiskon.setText("Diskon: " + item.getDiskon() + "%");
+        } else {
+            holder.tvDiskon.setVisibility(View.GONE);
+        }
 
         double totalHarga = item.getQty() * item.getHargaSatuan()
                 * (1 - item.getDiskon() / 100);
 
         holder.tvTotalHarga.setText("Rp " + format(totalHarga));
 
+        // Tombol delete (mode edit)
         if (isEditable) {
             holder.btnDelete.setVisibility(View.VISIBLE);
             holder.btnDelete.setOnClickListener(v -> {
-                int pos = holder.getAdapterPosition();
+                int pos = holder.getBindingAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION && listener != null) {
                     listener.onItemDelete(pos);
                 }
@@ -73,13 +92,15 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
 
     @Override
     public int getItemCount() {
-        return list == null ? 0 : list.size();
+        return list != null ? list.size() : 0;
     }
 
+    // ===== UTIL =====
     private String format(double value) {
-        return String.format("%,.0f", value);
+        return rupiahFormat.format(value);
     }
 
+    // ===== VIEW HOLDER =====
     static class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView tvNamaBarang, tvQty, tvHargaSatuan, tvDiskon, tvTotalHarga;
