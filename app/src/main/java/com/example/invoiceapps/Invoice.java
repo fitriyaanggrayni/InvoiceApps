@@ -24,7 +24,7 @@ public class Invoice implements Serializable {
     private double nilaiPajak;
     private Date createdAt;
 
-    private Company company; // ✅ TAMBAHKAN DI SINI
+    private Company company;
     private List<ItemInvoice> items = new ArrayList<>();
 
     // ===== CONSTRUCTOR =====
@@ -56,7 +56,7 @@ public class Invoice implements Serializable {
 
     public Date getCreatedAt() { return createdAt; }
     public List<ItemInvoice> getItems() { return items; }
-    public Company getCompany() { return company; } // ✅
+    public Company getCompany() { return company; }
 
     // ===== SETTER =====
     public void setId(String id) { this.id = id; }

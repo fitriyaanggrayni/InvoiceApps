@@ -42,18 +42,42 @@ public class MainActivity extends AppCompatActivity {
         progressBar = findViewById(R.id.progressBar);
         fab = findViewById(R.id.fabAddInvoice);
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        adapter = new InvoiceHistoryAdapter(invoiceList, this);
-        recyclerView.setAdapter(adapter);
-
+        // ===== Inisialisasi Firebase =====
         db = FirebaseFirestore.getInstance();
         user = FirebaseAuth.getInstance().getCurrentUser();
 
-        fab.setOnClickListener(v ->
-                startActivity(new Intent(MainActivity.this, AddInvoiceActivity.class)));
+        // ===== RecyclerView =====
+        recyclerView.setLayoutManager(new LinearLayoutManager(this));
+        adapter = new InvoiceHistoryAdapter(invoiceList, this, true);
+        recyclerView.setAdapter(adapter);
 
+        // ===== Listener tombol delete =====
+        adapter.setOnItemDeleteListener(position -> {
+            Invoice invoice = invoiceList.get(position);
+            if (invoice.getId() != null) {
+                db.collection("invoices")
+                        .document(invoice.getId())
+                        .delete()
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(MainActivity.this, "Invoice berhasil dihapus", Toast.LENGTH_SHORT).show();
+                            // Jangan remove dari list manual, Firestore listener akan update otomatis
+                        })
+                        .addOnFailureListener(e ->
+                                Toast.makeText(MainActivity.this, "Gagal menghapus invoice: " + e.getMessage(), Toast.LENGTH_SHORT).show()
+                        );
+            }
+        });
+
+
+        // ===== FAB tambah invoice =====
+        fab.setOnClickListener(v ->
+                startActivity(new Intent(MainActivity.this, AddInvoiceActivity.class))
+        );
+
+        // ===== Load invoice =====
         loadInvoices();
     }
+
 
     private void loadInvoices() {
 

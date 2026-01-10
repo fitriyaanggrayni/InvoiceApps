@@ -9,7 +9,6 @@ public class ItemInvoice implements Serializable {
     private double hargaSatuan;
     private double diskon; // persen (0 - 100)
 
-    // WAJIB untuk Firebase / Serializable
     public ItemInvoice() {}
 
     public ItemInvoice(String namaBarang, int qty, double hargaSatuan, double diskon) {
