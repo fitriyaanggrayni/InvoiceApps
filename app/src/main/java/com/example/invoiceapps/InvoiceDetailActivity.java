@@ -31,6 +31,10 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+
+
 public class InvoiceDetailActivity extends AppCompatActivity {
 
     private static final int MAX_ITEM_NAME_LENGTH = 18;
@@ -84,12 +88,12 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         loadInvoiceDetail();
 
         btnEdit.setOnClickListener(v -> {
-            Intent intent = new Intent(this, AddInvoiceActivity.class);
-            intent.putExtra("invoiceId", invoiceId);
-            intent.putExtra("isEdit", true);
-            // Pakai startActivityForResult agar bisa refresh setelah edit
-            startActivityForResult(intent, REQUEST_EDIT_INVOICE);
+            Intent i = new Intent(this, AddInvoiceActivity.class);
+            i.putExtra("isEdit", true);
+            i.putExtra("invoiceId", invoiceId);
+            editLauncher.launch(i);
         });
+
 
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
@@ -114,14 +118,9 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         });
 
     }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_EDIT_INVOICE && resultCode == RESULT_OK) {
-            // Setelah edit selesai, refresh data invoice
+    private void reloadInvoice() {
+        if (invoiceId != null) {
             loadInvoiceDetail();
-            Toast.makeText(this, "Data invoice diperbarui", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -419,6 +418,17 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(":", rightX + 100, y + 36, bold);
         canvas.drawText(jenisPembayaran, rightX + 110, y + 36, normal);
     }
+
+    private ActivityResultLauncher<Intent> editLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == RESULT_OK) {
+                            reloadInvoice(); // 🔥 refresh otomatis
+                        }
+                    }
+            );
+
 
     private void drawSummary(Canvas c, String label, double value, int y) {
         Paint p = new Paint();
