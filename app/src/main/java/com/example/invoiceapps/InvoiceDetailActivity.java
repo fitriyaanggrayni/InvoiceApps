@@ -236,8 +236,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         normal.setTextSize(11);
         bold.setTextSize(12);
         bold.setFakeBoldText(true);
-        tableText.setTextSize(8.5f);
-        tableHeader.setTextSize(9);
+        tableText.setTextSize(10f);
+        tableHeader.setTextSize(11);
         tableHeader.setFakeBoldText(true);
         line.setStrokeWidth(2);
 
@@ -324,6 +324,19 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         drawSummary(canvas, "Pajak (" + invoice.getPajak() + "%)", invoice.getNilaiPajak(), y);
         y += 18;
         drawSummary(canvas, "Ongkir", invoice.getBiayaPengiriman(), y);
+        y += 18;
+// Tambahkan garis pemisah sebelum total
+        canvas.drawLine(330, y, 555, y, line);
+
+        y += 20;  // beri jarak setelah garis
+
+// Gambar total dengan font bold
+        Paint boldSummary = new Paint();
+        boldSummary.setTextSize(12);
+        boldSummary.setFakeBoldText(true);
+        canvas.drawText("Total", 330, y, boldSummary);
+        canvas.drawText(rupiah(invoice.getTotal()), 470, y, boldSummary);
+
 
         y += 70;
         canvas.drawText("Penerima", 100, y, normal);
@@ -333,10 +346,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawLine(60, y, 200, y, line);
         canvas.drawLine(350, y, 520, y, line);
 
+    /*
         y += 15;
         canvas.drawText(namaPenerima, 90, y, normal);
         canvas.drawText(namaAdmin, 380, y, normal);
-
+    */
 
         pdf.finishPage(page);
 
@@ -441,7 +455,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
     private void drawSummary(Canvas c, String label, double value, int y) {
         Paint p = new Paint();
-        p.setTextSize(11);
+        p.setTextSize(10);
         c.drawText(label, 330, y, p);
         c.drawText(rupiah(value), 470, y, p);
     }
