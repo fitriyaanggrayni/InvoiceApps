@@ -83,7 +83,7 @@ public class Invoice implements Serializable {
         items.add(item);
     }
 
-    public void setCompany(Company company) { // ✅
+    public void setCompany(Company company) { 
         this.company = company;
     }
 }
