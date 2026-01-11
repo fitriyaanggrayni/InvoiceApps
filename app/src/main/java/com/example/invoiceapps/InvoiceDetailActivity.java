@@ -32,6 +32,8 @@ import java.util.Map;
 
 public class InvoiceDetailActivity extends AppCompatActivity {
 
+    private static final int MAX_ITEM_NAME_LENGTH = 18;
+
     private TextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
     private RecyclerView rvDetailBarang;
     private Button btnDownloadPdf;
@@ -52,6 +54,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     private String namaToko = "";
     private String alamatToko = "";
     private String telpToko = "";
+    private String alamatCustomer = "-";
+    private String telpCustomer = "-";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +112,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
             }
         });
-
     }
 
     private void initViews() {
@@ -147,10 +150,13 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     jenisPembayaran = safeString(doc, "metodePembayaran", "-");
                     namaAdmin = safeString(doc, "namaAdmin", "Administrator");
                     namaPenerima = safeString(doc, "namaPenerima", "Penerima");
+                    alamatCustomer = safeString(doc, "alamatCustomer", "-");
+                    telpCustomer = safeString(doc, "telpCustomer", "-");
 
                     // COMPANY PER INVOICE
-                    Map<String, Object> companyMap = (Map<String, Object>) doc.get("company");
-                    if (companyMap != null) {
+                    Object companyObj = doc.get("company");
+                    if (companyObj instanceof Map) {
+                        Map<String, Object> companyMap = (Map<String, Object>) companyObj;
                         Company company = new Company(
                                 getMapString(companyMap, "namaUsaha"),
                                 getMapString(companyMap, "alamat"),
@@ -168,9 +174,10 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     }
 
                     // ITEMS
-                    List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
+                    Object itemsObj = doc.get("items");
                     itemList.clear();
-                    if (items != null) {
+                    if (itemsObj instanceof List) {
+                        List<Map<String, Object>> items = (List<Map<String, Object>>) itemsObj;
                         for (Map<String, Object> map : items) {
                             Number qty = (Number) map.get("qty");
                             Number harga = (Number) map.get("hargaSatuan");
@@ -241,9 +248,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         // LOGO
         if (logoUri != null) {
-            InputStream is = null;
-            try {
-                is = getContentResolver().openInputStream(logoUri);
+            try (InputStream is = getContentResolver().openInputStream(logoUri)) {
                 Bitmap logo = BitmapFactory.decodeStream(is);
                 if (logo != null) {
                     Bitmap scaled = Bitmap.createScaledBitmap(logo, 70, 70, false);
@@ -251,10 +256,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                if (is != null) {
-                    try { is.close(); } catch (Exception ignored) {}
-                }
             }
         }
 
@@ -272,14 +273,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 90;
         canvas.drawLine(40, y, 555, y, line);
 
+        // HEADER (Customer & Invoice info)
         y += 25;
-        drawKeyValue(canvas, "No Invoice", invoice.getNoInvoice(), y);
-        y += 18;
-        drawKeyValue(canvas, "Customer", invoice.getNamaCustomer(), y);
-        y += 18;
-        drawKeyValue(canvas, "Tanggal", invoice.getTanggal(), y);
+        generatePdfHeader(canvas, y);
 
-        y += 20;
+        y += 70;
         canvas.drawLine(40, y, 555, y, line);
 
         // TABLE HEADER
@@ -299,7 +297,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             double diskon = kotor * (item.getDiskon() / 100);
             double totalItem = kotor - diskon;
 
-            canvas.drawText(limitText(item.getNamaBarang(), 18), 40, y, tableText);
+            canvas.drawText(limitText(item.getNamaBarang(), MAX_ITEM_NAME_LENGTH), 40, y, tableText);
             canvas.drawText(String.valueOf(item.getQty()), 240, y, tableText);
             canvas.drawText(rupiah(item.getHargaSatuan()), 290, y, tableText);
             canvas.drawText(item.getDiskon() + " %", 380, y, tableText);
@@ -321,20 +319,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 18;
         drawSummary(canvas, "Ongkir", invoice.getBiayaPengiriman(), y);
 
-        y += 22;
-        Paint p = new Paint();
-        p.setTextSize(11);
-        canvas.drawText("Jenis Pembayaran", 330, y, p);
-        canvas.drawText(jenisPembayaran, 470, y, p);
-
-        y += 22;
-        canvas.drawLine(330, y, 555, y, line);
-
-        y += 22;
-        bold.setTextSize(13);
-        canvas.drawText("TOTAL", 330, y, bold);
-        canvas.drawText(rupiah(invoice.getTotal()), 470, y, bold);
-
         y += 70;
         canvas.drawText("Penerima", 100, y, normal);
         canvas.drawText("Administrator", 400, y, normal);
@@ -347,30 +331,85 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(namaPenerima, 90, y, normal);
         canvas.drawText(namaAdmin, 380, y, normal);
 
+
         pdf.finishPage(page);
 
-        // --- SIMPAN PDF KE FOLDER PUBLIK ---
-        File folder = new File(
-                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS),
-                "Invoice Apps"
-        );
-        if (!folder.exists()) folder.mkdirs();
+        // SIMPAN PDF
+        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Invoice Apps");
+        if (!folder.exists() && !folder.mkdirs()) {
+            Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
+            return null;
+        }
 
         File file = new File(folder, "Invoice_" + invoice.getNoInvoice() + ".pdf");
 
-        try {
-            pdf.writeTo(new FileOutputStream(file)); // menulis PDF
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            pdf.writeTo(fos);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         } finally {
-            pdf.close(); // tutup dokumen
+            pdf.close();
         }
 
         return file;
-
     }
 
+    private void generatePdfHeader(Canvas canvas, int yStart) {
+        int y = yStart;
+        Paint bold = new Paint();
+        Paint normal = new Paint();
+        bold.setFakeBoldText(true);
+        bold.setTextSize(11);
+        normal.setTextSize(11);
+
+        int leftX = 40;
+        int rightX = 350;
+
+        // Kalau alamat/telp kosong, ganti dengan "N/A"
+        String telp = (telpCustomer == null || telpCustomer.trim().isEmpty() || telpCustomer.equals("-")) ? "N/A" : telpCustomer;
+        String alamat = (alamatCustomer == null || alamatCustomer.trim().isEmpty() || alamatCustomer.equals("-")) ? "N/A" : alamatCustomer;
+
+        // Customer info kiri
+        canvas.drawText("Customer", leftX, y, bold);
+        canvas.drawText(":", leftX + 80, y, bold);
+        canvas.drawText(invoice.getNamaCustomer(), leftX + 90, y, normal);
+
+        canvas.drawText("Telp", leftX, y + 18, bold);
+        canvas.drawText(":", leftX + 80, y + 18, bold);
+        canvas.drawText(telp, leftX + 90, y + 18, normal);
+
+        canvas.drawText("Alamat", leftX, y + 36, bold);
+        canvas.drawText(":", leftX + 80, y + 36, bold);
+        canvas.drawText(alamat, leftX + 90, y + 36, normal);
+
+        // Invoice info kanan
+        canvas.drawText("No Invoice", rightX, y, bold);
+        canvas.drawText(":", rightX + 100, y, bold);
+        canvas.drawText(invoice.getNoInvoice(), rightX + 110, y, normal);
+
+        canvas.drawText("Tanggal", rightX, y + 18, bold);
+        canvas.drawText(":", rightX + 100, y + 18, bold);
+        canvas.drawText(invoice.getTanggal(), rightX + 110, y + 18, normal);
+
+        canvas.drawText("Jenis Pembayaran", rightX, y + 36, bold);
+        canvas.drawText(":", rightX + 100, y + 36, bold);
+        canvas.drawText(jenisPembayaran, rightX + 110, y + 36, normal);
+    }
+
+
+    private void drawKeyValueRight(Canvas c, String key, String value, int y) {
+        Paint b = new Paint();
+        Paint n = new Paint();
+        b.setFakeBoldText(true);
+        b.setTextSize(11);
+        n.setTextSize(11);
+
+        int rightX = 360;
+        c.drawText(key, rightX, y, b);
+        c.drawText(":", rightX + 60, y, b);
+        c.drawText(value, rightX + 70, y, n);
+    }
 
     private double getDouble(DocumentSnapshot doc, String key) {
         Double v = doc.getDouble(key);
