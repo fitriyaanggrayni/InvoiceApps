@@ -12,41 +12,36 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.InvoiceApps"
-        tools:targetApi="31"
-        android:requestLegacyExternalStorage="true">
-
+        tools:targetApi="31">
+        <activity
+            android:name=".EditInvoiceActivity"
+            android:exported="false" />
         <!-- LOGIN (Launcher) -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
-
-        <!-- MAIN -->
+        </activity> <!-- MAIN -->
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
-
-        <!-- ADD INVOICE -->
+            android:exported="false" /> <!-- ADD INVOICE -->
         <activity
             android:name=".AddInvoiceActivity"
             android:exported="false" />
-
         <activity
             android:name=".InvoiceDetailActivity"
-            android:exported="false" />
-
-        <!-- AUTH -->
+            android:exported="false" /> <!-- AUTH -->
         <activity
             android:name=".RegisterActivity"
             android:exported="false" />
-
         <activity
             android:name=".ResetPasswordActivity"
             android:exported="false" />
@@ -60,7 +55,6 @@
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/file_paths" />
         </provider>
-
     </application>
 
 </manifest>

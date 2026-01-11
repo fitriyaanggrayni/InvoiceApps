@@ -347,6 +347,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
 
 
+
     private final TextWatcher simpleWatcher = new TextWatcher() {
         @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
         @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}

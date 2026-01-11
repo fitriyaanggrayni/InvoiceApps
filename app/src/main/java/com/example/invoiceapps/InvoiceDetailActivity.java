@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import com.google.android.material.button.MaterialButton;
+
 public class InvoiceDetailActivity extends AppCompatActivity {
 
     private static final int MAX_ITEM_NAME_LENGTH = 18;
@@ -56,17 +58,22 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     private String telpToko = "";
     private String alamatCustomer = "-";
     private String telpCustomer = "-";
+    MaterialButton btnEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invoice_detail);
 
+        // ===== INIT FORMAT =====
         rupiahFormat = NumberFormat.getCurrencyInstance(new Locale("in", "ID"));
         rupiahFormat.setMaximumFractionDigits(0);
 
+        // ===== INIT VIEW =====
         initViews();
         setupRecyclerView();
+
+        btnEdit = findViewById(R.id.btnEdit);
 
         db = FirebaseFirestore.getInstance();
 
@@ -77,10 +84,18 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             return;
         }
 
-        logoUri = getIntent().getParcelableExtra("logoUri");
-
+        // ===== LOAD DATA =====
         loadInvoiceDetail();
 
+        // ===== EDIT INVOICE =====
+        btnEdit.setOnClickListener(v -> {
+            Intent intent = new Intent(this, EditInvoiceActivity.class);
+            intent.putExtra("invoiceId", invoiceId);
+            startActivity(intent);
+        });
+
+
+        // ===== DOWNLOAD PDF =====
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
 
@@ -105,7 +120,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
                     startActivity(Intent.createChooser(intent, "Buka PDF dengan"));
                 } catch (Exception e) {
-                    e.printStackTrace();
                     Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
                 }
             } else {
@@ -113,6 +127,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             }
         });
     }
+
 
     private void initViews() {
         tvNoInvoice = findViewById(R.id.tvNoInvoice);
