@@ -151,7 +151,6 @@
                         android:layout_height="wrap_content"
                         android:hint="No Telepon Usaha"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:prefixText="+62 "
                         app:hintTextColor="#E65100"
                         app:boxStrokeColor="#E65100">
 
@@ -229,7 +228,6 @@
                         android:layout_marginBottom="12dp"
                         android:hint="No Telepon Pelanggan"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:prefixText="+62 "
                         app:hintTextColor="#6A1B9A"
                         app:boxStrokeColor="#6A1B9A">
 

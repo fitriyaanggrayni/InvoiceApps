@@ -18,9 +18,11 @@
         android:theme="@style/Theme.InvoiceApps"
         tools:targetApi="31">
         <activity
-            android:name=".EditInvoiceActivity"
+            android:name=".TambahInvoiceActivity"
             android:exported="false" />
-        <!-- LOGIN (Launcher) -->
+        <activity
+            android:name=".EditInvoiceActivity"
+            android:exported="false" /> <!-- LOGIN (Launcher) -->
         <activity
             android:name=".LoginActivity"
             android:exported="true">

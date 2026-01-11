@@ -20,6 +20,7 @@ import android.widget.Toast;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
@@ -68,19 +69,10 @@ public class AddInvoiceActivity extends AppCompatActivity {
     private String namaAdmin = "-";
     private String namaPenerima = "-";
 
+    // ====== EDIT MODE ======
+    private String invoiceId;
+    private boolean isEdit = false;
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_invoice);
-
-        initViews();
-        setupRupiah();
-        setupMetodePembayaran();
-        setupTanggal();
-        setupRecycler();
-        setupListener();
-    }
 
     // ================= INIT =================
     private void initViews() {
@@ -117,9 +109,6 @@ public class AddInvoiceActivity extends AppCompatActivity {
         etBiayaPengiriman = findViewById(R.id.etBiayaPengiriman);
 
         btnSimpan = findViewById(R.id.btnSimpan);
-
-        generateNoInvoice();
-        setTanggalHariIni();
     }
 
     // ================= SETUP =================
@@ -176,17 +165,30 @@ public class AddInvoiceActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onActivityResult(int req, int res, Intent data) {
-        super.onActivityResult(req, res, data);
-        if (req == PICK_LOGO && res == RESULT_OK && data != null) {
-            logoUri = data.getData();
-            try {
-                getContentResolver().takePersistableUriPermission(
-                        logoUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
-            } catch (Exception ignored) {}
-            imgLogo.setImageURI(logoUri);
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add_invoice);
+
+        initViews();
+        setupRupiah();
+        setupMetodePembayaran();
+        setupTanggal();
+        setupRecycler();
+        setupListener();
+
+        Intent intent = getIntent();
+        invoiceId = intent.getStringExtra("invoiceId");
+        isEdit = intent.getBooleanExtra("isEdit", false);
+
+        if (isEdit && invoiceId != null) {
+            loadInvoiceForEdit(invoiceId);
+        } else {
+            generateNoInvoice();
+            setTanggalHariIni();
         }
     }
+
+
 
     // ================= ITEM =================
     private void tambahBarang() {
@@ -303,24 +305,100 @@ public class AddInvoiceActivity extends AppCompatActivity {
         company.put("alamat", etAlamatUsaha.getText().toString());
         company.put("telp", etTelpUsaha.getText().toString());
         company.put("logoUri", logoUri != null ? logoUri.toString() : "");
-
-// simpan ke invoice
         data.put("company", company);
 
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
 
+        if (isEdit && invoiceId != null) {
+            // Update dokumen existing
+            db.collection("invoices")
+                    .document(invoiceId)
+                    .set(data)
+                    .addOnSuccessListener(aVoid -> {
+                        Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Gagal memperbarui invoice", Toast.LENGTH_SHORT).show();
+                    });
+        } else {
+            // Tambah dokumen baru
+            db.collection("invoices")
+                    .add(data)
+                    .addOnSuccessListener(d -> {
+                        Toast.makeText(this, "Invoice berhasil disimpan", Toast.LENGTH_SHORT).show();
+                        setResult(RESULT_OK);
+                        finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(this, "Gagal menyimpan invoice", Toast.LENGTH_SHORT).show();
+                    });
+        }
+    }
+
+    // ================= LOAD DATA UNTUK EDIT =================
+    private void loadInvoiceForEdit(String invoiceId) {
         FirebaseFirestore.getInstance()
                 .collection("invoices")
-                .add(data)
-                .addOnSuccessListener(d -> {
-                    Toast.makeText(this, "Invoice berhasil disimpan", Toast.LENGTH_SHORT).show();
+                .document(invoiceId)
+                .get()
+                .addOnSuccessListener(doc -> {
+                    if (!doc.exists()) {
+                        Toast.makeText(this, "Invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
+
+                    etNamaUsaha.setText(doc.getString("namaUsaha"));
+                    etAlamatUsaha.setText(doc.getString("alamatUsaha"));
+                    etTelpUsaha.setText(doc.getString("telpUsaha"));
+                    etNoInvoice.setText(doc.getString("noInvoice"));
+                    etNama.setText(doc.getString("namaCustomer"));
+                    etNoTelepon.setText(doc.getString("telpCustomer"));
+                    etAlamat.setText(doc.getString("alamatCustomer"));
+                    etTanggal.setText(doc.getString("tanggal"));
+                    etPembayaran.setText(doc.getString("metodePembayaran"));
+
+                    Double pajak = doc.getDouble("pajak");
+                    if (pajak != null) etPajak.setText(String.valueOf(pajak));
+
+                    Double biayaPengiriman = doc.getDouble("biayaPengiriman");
+                    if (biayaPengiriman != null) etBiayaPengiriman.setText(String.valueOf(biayaPengiriman));
+
+                    String logoStr = doc.getString("logoUri");
+                    if (logoStr != null && !logoStr.isEmpty()) {
+                        logoUri = Uri.parse(logoStr);
+                        imgLogo.setImageURI(logoUri);
+                    }
+
+                    List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
+                    listInvoice.clear();
+                    if (items != null) {
+                        for (Map<String, Object> m : items) {
+                            String namaBarang = (String) m.get("namaBarang");
+                            int qty = ((Number) m.get("qty")).intValue();
+                            double hargaSatuan = ((Number) m.get("hargaSatuan")).doubleValue();
+                            double diskon = ((Number) m.get("diskon")).doubleValue();
+
+                            listInvoice.add(new ItemInvoice(namaBarang, qty, hargaSatuan, diskon));
+                        }
+                    }
+                    invoiceAdapter.notifyDataSetChanged();
+
+                    hitungTotal();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Gagal memuat data invoice", Toast.LENGTH_SHORT).show();
                     finish();
                 });
     }
 
+
     // ================= UTIL =================
     private void generateNoInvoice() {
         String t = new SimpleDateFormat("yyyyMMdd", Locale.getDefault()).format(Calendar.getInstance().getTime());
-        etNoInvoice.setText("INV-" + t + "-" + (int)(Math.random() * 1000));
+        etNoInvoice.setText("INV-" + t + "-" + (int) (Math.random() * 1000));
     }
 
     private void setTanggalHariIni() {
@@ -345,12 +423,19 @@ public class AddInvoiceActivity extends AppCompatActivity {
         }
     }
 
-
-
+    private String safeString(DocumentSnapshot doc, String key, String def) {
+        String v = doc.getString(key);
+        return v != null ? v : def;
+    }
 
     private final TextWatcher simpleWatcher = new TextWatcher() {
-        @Override public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
-        @Override public void onTextChanged(CharSequence s, int a, int b, int c) {}
-        @Override public void afterTextChanged(Editable s) { hitungTotal(); }
+        @Override
+        public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+        @Override
+        public void onTextChanged(CharSequence s, int a, int b, int c) {}
+        @Override
+        public void afterTextChanged(Editable s) {
+            hitungTotal();
+        }
     };
 }

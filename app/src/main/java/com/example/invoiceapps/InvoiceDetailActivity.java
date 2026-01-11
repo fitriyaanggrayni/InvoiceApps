@@ -18,6 +18,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
@@ -30,15 +31,15 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.google.android.material.button.MaterialButton;
-
 public class InvoiceDetailActivity extends AppCompatActivity {
 
     private static final int MAX_ITEM_NAME_LENGTH = 18;
+    private static final int REQUEST_EDIT_INVOICE = 101;
 
     private TextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
     private RecyclerView rvDetailBarang;
     private Button btnDownloadPdf;
+    private MaterialButton btnEdit;
 
     private Invoice invoice;
     private List<ItemInvoice> itemList;
@@ -48,32 +49,27 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     private String invoiceId;
     private NumberFormat rupiahFormat;
 
+    // PDF data
     private String jenisPembayaran = "-";
     private String namaAdmin = "Administrator";
     private String namaPenerima = "Penerima";
-
     private Uri logoUri;
     private String namaToko = "";
     private String alamatToko = "";
     private String telpToko = "";
     private String alamatCustomer = "-";
     private String telpCustomer = "-";
-    MaterialButton btnEdit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invoice_detail);
 
-        // ===== INIT FORMAT =====
         rupiahFormat = NumberFormat.getCurrencyInstance(new Locale("in", "ID"));
         rupiahFormat.setMaximumFractionDigits(0);
 
-        // ===== INIT VIEW =====
         initViews();
         setupRecyclerView();
-
-        btnEdit = findViewById(R.id.btnEdit);
 
         db = FirebaseFirestore.getInstance();
 
@@ -84,50 +80,48 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             return;
         }
 
-        // ===== LOAD DATA =====
         loadInvoiceDetail();
 
-        // ===== EDIT INVOICE =====
         btnEdit.setOnClickListener(v -> {
-            Intent intent = new Intent(this, EditInvoiceActivity.class);
+            Intent intent = new Intent(this, AddInvoiceActivity.class);
             intent.putExtra("invoiceId", invoiceId);
-            startActivity(intent);
+            intent.putExtra("isEdit", true);
+            // Pakai startActivityForResult agar bisa refresh setelah edit
+            startActivityForResult(intent, REQUEST_EDIT_INVOICE);
         });
 
-
-        // ===== DOWNLOAD PDF =====
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
 
             File pdf = generatePdf();
             if (pdf != null && pdf.exists()) {
-                Toast.makeText(
-                        this,
-                        "Invoice berhasil diunduh di:\n" + pdf.getAbsolutePath(),
-                        Toast.LENGTH_LONG
-                ).show();
-
                 try {
                     Uri uri = FileProvider.getUriForFile(
                             this,
                             getPackageName() + ".provider",
                             pdf
                     );
-
-                    Intent intent = new Intent(Intent.ACTION_VIEW);
-                    intent.setDataAndType(uri, "application/pdf");
-                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                    startActivity(Intent.createChooser(intent, "Buka PDF dengan"));
+                    Intent i = new Intent(Intent.ACTION_VIEW);
+                    i.setDataAndType(uri, "application/pdf");
+                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    startActivity(i);
                 } catch (Exception e) {
                     Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
                 }
-            } else {
-                Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_EDIT_INVOICE && resultCode == RESULT_OK) {
+            // Setelah edit selesai, refresh data invoice
+            loadInvoiceDetail();
+            Toast.makeText(this, "Data invoice diperbarui", Toast.LENGTH_SHORT).show();
+        }
+    }
 
     private void initViews() {
         tvNoInvoice = findViewById(R.id.tvNoInvoice);
@@ -136,6 +130,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         tvTotal = findViewById(R.id.tvTotal);
         rvDetailBarang = findViewById(R.id.rvDetailBarang);
         btnDownloadPdf = findViewById(R.id.btnDownloadPdf);
+        btnEdit = findViewById(R.id.btnEdit);
     }
 
     private void setupRecyclerView() {
@@ -150,7 +145,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 .document(invoiceId)
                 .get()
                 .addOnSuccessListener(doc -> {
-                    if (!doc.exists()) return;
+                    if (!doc.exists()) {
+                        Toast.makeText(this, "Invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
+                        finish();
+                        return;
+                    }
 
                     invoice = new Invoice(
                             doc.getString("noInvoice"),
@@ -162,48 +161,38 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     invoice.setPajak(getDouble(doc, "pajak"));
                     invoice.setBiayaPengiriman(getDouble(doc, "biayaPengiriman"));
 
-                    jenisPembayaran = safeString(doc, "metodePembayaran", "-");
-                    namaAdmin = safeString(doc, "namaAdmin", "Administrator");
-                    namaPenerima = safeString(doc, "namaPenerima", "Penerima");
                     alamatCustomer = safeString(doc, "alamatCustomer", "-");
                     telpCustomer = safeString(doc, "telpCustomer", "-");
+                    jenisPembayaran = safeString(doc, "metodePembayaran", "-");
 
-                    // COMPANY PER INVOICE
                     Object companyObj = doc.get("company");
                     if (companyObj instanceof Map) {
-                        Map<String, Object> companyMap = (Map<String, Object>) companyObj;
-                        Company company = new Company(
-                                getMapString(companyMap, "namaUsaha"),
-                                getMapString(companyMap, "alamat"),
-                                getMapString(companyMap, "telp"),
-                                getMapString(companyMap, "logoUri")
-                        );
+                        Map<String, Object> c = (Map<String, Object>) companyObj;
+                        namaToko = getMapString(c, "namaUsaha");
+                        alamatToko = getMapString(c, "alamat");
+                        telpToko = getMapString(c, "telp");
 
-                        invoice.setCompany(company);
-
-                        // Set info toko untuk PDF
-                        namaToko = company.getNamaUsaha();
-                        alamatToko = company.getAlamat();
-                        telpToko = company.getTelp();
-                        logoUri = company.getLogoUri() != null ? Uri.parse(company.getLogoUri()) : null;
+                        String logo = getMapString(c, "logoUri");
+                        if (!logo.isEmpty()) logoUri = Uri.parse(logo);
+                    } else {
+                        // Default kalau company kosong
+                        namaToko = "";
+                        alamatToko = "";
+                        telpToko = "";
+                        logoUri = null;
                     }
 
-                    // ITEMS
-                    Object itemsObj = doc.get("items");
                     itemList.clear();
-                    if (itemsObj instanceof List) {
-                        List<Map<String, Object>> items = (List<Map<String, Object>>) itemsObj;
-                        for (Map<String, Object> map : items) {
-                            Number qty = (Number) map.get("qty");
-                            Number harga = (Number) map.get("hargaSatuan");
-                            Number diskon = (Number) map.get("diskon");
+                    List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
 
-                            itemList.add(new ItemInvoice(
-                                    (String) map.get("namaBarang"),
-                                    qty != null ? qty.intValue() : 0,
-                                    harga != null ? harga.doubleValue() : 0,
-                                    diskon != null ? diskon.doubleValue() : 0
-                            ));
+                    if (items != null) {
+                        for (Map<String, Object> m : items) {
+                            String namaBarang = m.get("namaBarang") != null ? m.get("namaBarang").toString() : "";
+                            int qty = m.get("qty") instanceof Number ? ((Number) m.get("qty")).intValue() : 0;
+                            double hargaSatuan = m.get("hargaSatuan") instanceof Number ? ((Number) m.get("hargaSatuan")).doubleValue() : 0;
+                            double diskon = m.get("diskon") instanceof Number ? ((Number) m.get("diskon")).doubleValue() : 0;
+
+                            itemList.add(new ItemInvoice(namaBarang, qty, hargaSatuan, diskon));
                         }
                     }
 
@@ -216,28 +205,29 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     tvTotal.setText(rupiah(invoice.getTotal()));
 
                     adapter.notifyDataSetChanged();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Gagal memuat invoice", Toast.LENGTH_SHORT).show();
+                    e.printStackTrace();
                 });
     }
 
+    // ================= PDF & UTIL =================
+
     private void hitungInvoice() {
-        double subTotal = 0;
-        double totalDiskon = 0;
-
-        for (ItemInvoice item : invoice.getItems()) {
-            double kotor = item.getQty() * item.getHargaSatuan();
-            double diskon = kotor * (item.getDiskon() / 100);
-            subTotal += kotor;
-            totalDiskon += diskon;
+        double sub = 0, disc = 0;
+        for (ItemInvoice i : invoice.getItems()) {
+            double k = i.getQty() * i.getHargaSatuan();
+            double d = k * (i.getDiskon() / 100);
+            sub += k;
+            disc += d;
         }
-
-        double setelahDiskon = subTotal - totalDiskon;
-        double pajakNilai = setelahDiskon * (invoice.getPajak() / 100);
-        double total = setelahDiskon + pajakNilai + invoice.getBiayaPengiriman();
-
-        invoice.setSubTotal(subTotal);
-        invoice.setTotalDiskon(totalDiskon);
-        invoice.setNilaiPajak(pajakNilai);
-        invoice.setTotal(total);
+        double after = sub - disc;
+        double tax = after * (invoice.getPajak() / 100);
+        invoice.setSubTotal(sub);
+        invoice.setTotalDiskon(disc);
+        invoice.setNilaiPajak(tax);
+        invoice.setTotal(after + tax + invoice.getBiayaPengiriman());
     }
 
     private File generatePdf() {
@@ -256,8 +246,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         tableHeader.setFakeBoldText(true);
         line.setStrokeWidth(2);
 
-        PdfDocument.Page page =
-                pdf.startPage(new PdfDocument.PageInfo.Builder(595, 842, 1).create());
+        PdfDocument.Page page = pdf.startPage(new PdfDocument.PageInfo.Builder(595, 842, 1).create());
         Canvas canvas = page.getCanvas();
         int y = 40;
 
@@ -340,18 +329,16 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 18;
         drawSummary(canvas, "Ongkir", invoice.getBiayaPengiriman(), y);
         y += 18;
-// Tambahkan garis pemisah sebelum total
+
         canvas.drawLine(330, y, 555, y, line);
 
         y += 20;  // beri jarak setelah garis
 
-// Gambar total dengan font bold
         Paint boldSummary = new Paint();
         boldSummary.setTextSize(12);
         boldSummary.setFakeBoldText(true);
         canvas.drawText("Total", 330, y, boldSummary);
         canvas.drawText(rupiah(invoice.getTotal()), 470, y, boldSummary);
-
 
         y += 70;
         canvas.drawText("Penerima", 100, y, normal);
@@ -361,18 +348,13 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawLine(60, y, 200, y, line);
         canvas.drawLine(350, y, 520, y, line);
 
-    /*
-        y += 15;
-        canvas.drawText(namaPenerima, 90, y, normal);
-        canvas.drawText(namaAdmin, 380, y, normal);
-    */
-
         pdf.finishPage(page);
 
         // SIMPAN PDF
         File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Invoice Apps");
         if (!folder.exists() && !folder.mkdirs()) {
             Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
+            pdf.close();
             return null;
         }
 
@@ -382,6 +364,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             pdf.writeTo(fos);
         } catch (Exception e) {
             e.printStackTrace();
+            pdf.close();
+            Toast.makeText(this, "Gagal menyimpan PDF", Toast.LENGTH_SHORT).show();
             return null;
         } finally {
             pdf.close();
@@ -389,6 +373,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         return file;
     }
+
 
     private void generatePdfHeader(Canvas canvas, int yStart) {
         int y = yStart;
@@ -401,7 +386,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         int leftX = 40;
         int rightX = 350;
 
-        // Kalau alamat/telp kosong, ganti dengan "N/A"
         String telp = (telpCustomer == null || telpCustomer.trim().isEmpty() || telpCustomer.equals("-")) ? "N/A" : telpCustomer;
         String alamat = (alamatCustomer == null || alamatCustomer.trim().isEmpty() || alamatCustomer.equals("-")) ? "N/A" : alamatCustomer;
 
@@ -432,19 +416,13 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(jenisPembayaran, rightX + 110, y + 36, normal);
     }
 
-
-    private void drawKeyValueRight(Canvas c, String key, String value, int y) {
-        Paint b = new Paint();
-        Paint n = new Paint();
-        b.setFakeBoldText(true);
-        b.setTextSize(11);
-        n.setTextSize(11);
-
-        int rightX = 360;
-        c.drawText(key, rightX, y, b);
-        c.drawText(":", rightX + 60, y, b);
-        c.drawText(value, rightX + 70, y, n);
+    private void drawSummary(Canvas c, String label, double value, int y) {
+        Paint p = new Paint();
+        p.setTextSize(10);
+        c.drawText(label, 330, y, p);
+        c.drawText(rupiah(value), 470, y, p);
     }
+
 
     private double getDouble(DocumentSnapshot doc, String key) {
         Double v = doc.getDouble(key);
@@ -456,27 +434,9 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         return v != null ? v : def;
     }
 
-    private void drawKeyValue(Canvas c, String key, String value, int y) {
-        Paint b = new Paint();
-        Paint n = new Paint();
-        b.setFakeBoldText(true);
-        b.setTextSize(11);
-        n.setTextSize(11);
-
-        c.drawText(key, 40, y, b);
-        c.drawText(":", 120, y, b);
-        c.drawText(value, 130, y, n);
-    }
-
-    private void drawSummary(Canvas c, String label, double value, int y) {
-        Paint p = new Paint();
-        p.setTextSize(10);
-        c.drawText(label, 330, y, p);
-        c.drawText(rupiah(value), 470, y, p);
-    }
-
-    private String rupiah(double v) {
-        return rupiahFormat.format(v);
+    private String getMapString(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        return v != null ? v.toString() : "";
     }
 
     private String limitText(String text, int max) {
@@ -484,8 +444,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         return text.length() > max ? text.substring(0, max) + "…" : text;
     }
 
-    private String getMapString(Map<String, Object> map, String key) {
-        Object v = map.get(key);
-        return v != null ? v.toString() : "";
+    private String rupiah(double v) {
+        return rupiahFormat.format(v);
     }
 }
