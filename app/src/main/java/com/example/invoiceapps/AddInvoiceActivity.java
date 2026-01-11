@@ -1,26 +1,26 @@
 package com.example.invoiceapps;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.app.DatePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
@@ -32,6 +32,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
+import android.widget.AutoCompleteTextView;
+import android.widget.ArrayAdapter;
 
 public class AddInvoiceActivity extends AppCompatActivity {
 
@@ -47,6 +50,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     // ====== INVOICE ======
     private TextInputEditText etNoInvoice, etTanggal;
+    private ArrayAdapter<String> pembayaranAdapter;
     private AutoCompleteTextView etPembayaran;
 
     // ====== ITEM ======
@@ -70,9 +74,37 @@ public class AddInvoiceActivity extends AppCompatActivity {
     private String namaPenerima = "-";
 
     // ====== EDIT MODE ======
-    private String invoiceId;
     private boolean isEdit = false;
+    private String invoiceId;
 
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_add_invoice);
+
+        initViews();
+        setupRupiah();
+        setupMetodePembayaran();
+        setupTanggal();
+        setupRecycler();
+        setupListener();
+
+        // Cek jika ini mode edit dan ada invoiceId dari Intent
+        Intent intent = getIntent();
+        isEdit = intent.getBooleanExtra("isEdit", false);
+        if (isEdit) {
+            invoiceId = intent.getStringExtra("invoiceId");
+            if (invoiceId != null && !invoiceId.isEmpty()) {
+                loadInvoiceForEdit(invoiceId);
+            } else {
+                Toast.makeText(this, "Invoice ID tidak ditemukan untuk edit", Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        } else {
+            generateNoInvoice();
+            setTanggalHariIni();
+        }
+    }
 
     // ================= INIT =================
     private void initViews() {
@@ -121,8 +153,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     private void setupMetodePembayaran() {
         String[] metode = {"Tunai", "Transfer Bank", "E-Wallet", "Kartu Debit", "Kartu Kredit", "COD"};
-        etPembayaran.setAdapter(new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, metode));
+        pembayaranAdapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_dropdown_item_1line, metode);
+        etPembayaran.setAdapter(pembayaranAdapter);
     }
 
     private void setupTanggal() {
@@ -147,7 +180,6 @@ public class AddInvoiceActivity extends AppCompatActivity {
     }
 
     private void setupListener() {
-
         btnPilihLogo.setOnClickListener(v -> pilihLogo());
         btnTambahBarang.setOnClickListener(v -> tambahBarang());
         btnSimpan.setOnClickListener(v -> simpanInvoice());
@@ -165,30 +197,17 @@ public class AddInvoiceActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_add_invoice);
-
-        initViews();
-        setupRupiah();
-        setupMetodePembayaran();
-        setupTanggal();
-        setupRecycler();
-        setupListener();
-
-        Intent intent = getIntent();
-        invoiceId = intent.getStringExtra("invoiceId");
-        isEdit = intent.getBooleanExtra("isEdit", false);
-
-        if (isEdit && invoiceId != null) {
-            loadInvoiceForEdit(invoiceId);
-        } else {
-            generateNoInvoice();
-            setTanggalHariIni();
+    protected void onActivityResult(int req, int res, Intent data) {
+        super.onActivityResult(req, res, data);
+        if (req == PICK_LOGO && res == RESULT_OK && data != null) {
+            logoUri = data.getData();
+            try {
+                getContentResolver().takePersistableUriPermission(
+                        logoUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            } catch (Exception ignored) {}
+            imgLogo.setImageURI(logoUri);
         }
     }
-
-
 
     // ================= ITEM =================
     private void tambahBarang() {
@@ -202,21 +221,26 @@ public class AddInvoiceActivity extends AppCompatActivity {
             return;
         }
 
-        int qty = Integer.parseInt(qtyStr);
-        double harga = Double.parseDouble(hargaStr);
-        double diskon = diskonStr.isEmpty() ? 0 : Double.parseDouble(diskonStr);
+        try {
+            int qty = Integer.parseInt(qtyStr);
+            double harga = Double.parseDouble(hargaStr);
+            double diskon = diskonStr.isEmpty() ? 0 : Double.parseDouble(diskonStr);
 
-        listInvoice.add(new ItemInvoice(nama, qty, harga, diskon));
-        invoiceAdapter.notifyItemInserted(listInvoice.size() - 1);
+            listInvoice.add(new ItemInvoice(nama, qty, harga, diskon));
+            invoiceAdapter.notifyItemInserted(listInvoice.size() - 1);
 
-        etNamaBarang.setText("");
-        etQty.setText("");
-        etHargaSatuan.setText("");
-        etDiskon.setText("");
+            findViewById(R.id.cardDaftarBarang).setVisibility(View.VISIBLE);
 
-        hitungTotal();
+            etNamaBarang.setText("");
+            etQty.setText("");
+            etHargaSatuan.setText("");
+            etDiskon.setText("0");
+
+            hitungTotal();
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Format angka tidak valid", Toast.LENGTH_SHORT).show();
+        }
     }
-
 
     // ================= HITUNG =================
     private void hitungTotal() {
@@ -255,7 +279,10 @@ public class AddInvoiceActivity extends AppCompatActivity {
         }
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
+        if (user == null) {
+            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Map<String, Object> data = new HashMap<>();
 
@@ -271,13 +298,11 @@ public class AddInvoiceActivity extends AppCompatActivity {
         data.put("alamatCustomer", etAlamat.getText() != null ? etAlamat.getText().toString().trim() : "");
         data.put("telpCustomer", etNoTelepon.getText() != null ? etNoTelepon.getText().toString().trim() : "");
 
-
         data.put("pajak", etPajak.getText().toString().isEmpty() ? 0 :
                 Double.parseDouble(etPajak.getText().toString()));
 
         data.put("biayaPengiriman", etBiayaPengiriman.getText().toString().isEmpty() ? 0 :
                 Double.parseDouble(etBiayaPengiriman.getText().toString()));
-
 
         data.put("namaAdmin", namaAdmin);
         data.put("namaPenerima", namaPenerima);
@@ -299,45 +324,43 @@ public class AddInvoiceActivity extends AppCompatActivity {
         }
         data.put("items", items);
 
-        // ================= COMPANY PROFILE (PER INVOICE) =================
         Map<String, Object> company = new HashMap<>();
         company.put("namaUsaha", etNamaUsaha.getText().toString());
         company.put("alamat", etAlamatUsaha.getText().toString());
         company.put("telp", etTelpUsaha.getText().toString());
         company.put("logoUri", logoUri != null ? logoUri.toString() : "");
+
         data.put("company", company);
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         if (isEdit && invoiceId != null) {
-            // Update dokumen existing
-            db.collection("invoices")
-                    .document(invoiceId)
+            // Update dokumen yang sudah ada
+            db.collection("invoices").document(invoiceId)
                     .set(data)
-                    .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
+                    .addOnSuccessListener(d -> {
+                        Toast.makeText(this, "Invoice berhasil diupdate", Toast.LENGTH_SHORT).show();
                         finish();
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Gagal memperbarui invoice", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Gagal update invoice: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
         } else {
-            // Tambah dokumen baru
+            // Simpan dokumen baru
             db.collection("invoices")
                     .add(data)
                     .addOnSuccessListener(d -> {
                         Toast.makeText(this, "Invoice berhasil disimpan", Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
                         finish();
                     })
                     .addOnFailureListener(e -> {
-                        Toast.makeText(this, "Gagal menyimpan invoice", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Gagal simpan invoice: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
         }
     }
 
-    // ================= LOAD DATA UNTUK EDIT =================
+    // ================= LOAD DATA EDIT =================
+    @SuppressWarnings("unchecked")
     private void loadInvoiceForEdit(String invoiceId) {
         FirebaseFirestore.getInstance()
                 .collection("invoices")
@@ -345,51 +368,79 @@ public class AddInvoiceActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(doc -> {
                     if (!doc.exists()) {
-                        Toast.makeText(this, "Invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Data invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
                         finish();
                         return;
                     }
 
-                    etNamaUsaha.setText(doc.getString("namaUsaha"));
-                    etAlamatUsaha.setText(doc.getString("alamatUsaha"));
-                    etTelpUsaha.setText(doc.getString("telpUsaha"));
+                    // ===== DATA INVOICE =====
                     etNoInvoice.setText(doc.getString("noInvoice"));
                     etNama.setText(doc.getString("namaCustomer"));
-                    etNoTelepon.setText(doc.getString("telpCustomer"));
-                    etAlamat.setText(doc.getString("alamatCustomer"));
                     etTanggal.setText(doc.getString("tanggal"));
                     etPembayaran.setText(doc.getString("metodePembayaran"));
+                    etAlamat.setText(doc.getString("alamatCustomer"));
+                    etNoTelepon.setText(doc.getString("telpCustomer"));
 
                     Double pajak = doc.getDouble("pajak");
-                    if (pajak != null) etPajak.setText(String.valueOf(pajak));
+                    etPajak.setText(pajak != null ? String.valueOf(pajak) : "0");
 
-                    Double biayaPengiriman = doc.getDouble("biayaPengiriman");
-                    if (biayaPengiriman != null) etBiayaPengiriman.setText(String.valueOf(biayaPengiriman));
+                    Double ongkir = doc.getDouble("biayaPengiriman");
+                    etBiayaPengiriman.setText(ongkir != null ? String.valueOf(ongkir) : "0");
 
-                    String logoStr = doc.getString("logoUri");
-                    if (logoStr != null && !logoStr.isEmpty()) {
-                        logoUri = Uri.parse(logoStr);
-                        imgLogo.setImageURI(logoUri);
-                    }
+                    // ===== DATA USAHA (COMPANY) =====
+                    Object companyObj = doc.get("company");
+                    if (companyObj instanceof Map) {
+                        Map<String, Object> company = (Map<String, Object>) companyObj;
 
-                    List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
-                    listInvoice.clear();
-                    if (items != null) {
-                        for (Map<String, Object> m : items) {
-                            String namaBarang = (String) m.get("namaBarang");
-                            int qty = ((Number) m.get("qty")).intValue();
-                            double hargaSatuan = ((Number) m.get("hargaSatuan")).doubleValue();
-                            double diskon = ((Number) m.get("diskon")).doubleValue();
+                        etNamaUsaha.setText(
+                                company.get("namaUsaha") != null ? company.get("namaUsaha").toString() : ""
+                        );
 
-                            listInvoice.add(new ItemInvoice(namaBarang, qty, hargaSatuan, diskon));
+                        etAlamatUsaha.setText(
+                                company.get("alamat") != null ? company.get("alamat").toString() : ""
+                        );
+
+                        etTelpUsaha.setText(
+                                company.get("telp") != null ? company.get("telp").toString() : ""
+                        );
+
+                        String logo = company.get("logoUri") != null
+                                ? company.get("logoUri").toString()
+                                : "";
+
+                        if (!logo.isEmpty()) {
+                            logoUri = Uri.parse(logo);
+                            imgLogo.setImageURI(logoUri);
                         }
                     }
+
+                    // ===== ITEM BARANG =====
+                    listInvoice.clear();
+                    Object itemsObj = doc.get("items");
+                    if (itemsObj instanceof List) {
+                        List<Map<String, Object>> items =
+                                (List<Map<String, Object>>) itemsObj;
+
+                        for (Map<String, Object> m : items) {
+                            listInvoice.add(new ItemInvoice(
+                                    String.valueOf(m.get("namaBarang")),
+                                    ((Number) m.get("qty")).intValue(),
+                                    ((Number) m.get("hargaSatuan")).doubleValue(),
+                                    ((Number) m.get("diskon")).doubleValue()
+                            ));
+                        }
+                    }
+
                     invoiceAdapter.notifyDataSetChanged();
 
+                    // ===== HITUNG ULANG TOTAL =====
                     hitungTotal();
+
                 })
                 .addOnFailureListener(e -> {
-                    Toast.makeText(this, "Gagal memuat data invoice", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this,
+                            "Gagal memuat data invoice: " + e.getMessage(),
+                            Toast.LENGTH_LONG).show();
                     finish();
                 });
     }
@@ -406,7 +457,12 @@ public class AddInvoiceActivity extends AppCompatActivity {
     }
 
     private String rupiah(double v) {
-        return v == 0 ? "Rp 0" : rupiahFormat.format(v);
+        if (v == 0) return "Rp 0";
+        try {
+            return rupiahFormat.format(v);
+        } catch (Exception e) {
+            return "Rp 0";
+        }
     }
 
     private double parse(String r) {
@@ -423,19 +479,19 @@ public class AddInvoiceActivity extends AppCompatActivity {
         }
     }
 
-    private String safeString(DocumentSnapshot doc, String key, String def) {
-        String v = doc.getString(key);
-        return v != null ? v : def;
-    }
-
     private final TextWatcher simpleWatcher = new TextWatcher() {
         @Override
-        public void beforeTextChanged(CharSequence s, int a, int b, int c) {}
+        public void beforeTextChanged(CharSequence s, int a, int b, int c) {
+        }
+
         @Override
-        public void onTextChanged(CharSequence s, int a, int b, int c) {}
+        public void onTextChanged(CharSequence s, int a, int b, int c) {
+        }
+
         @Override
         public void afterTextChanged(Editable s) {
             hitungTotal();
         }
     };
+
 }

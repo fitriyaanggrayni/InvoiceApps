@@ -71,6 +71,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         initViews();
         setupRecyclerView();
 
+
         db = FirebaseFirestore.getInstance();
 
         invoiceId = getIntent().getStringExtra("invoiceId");
@@ -111,6 +112,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 }
             }
         });
+
     }
 
     @Override
@@ -136,9 +138,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         itemList = new ArrayList<>();
         adapter = new InvoiceAdapter(itemList, position -> {}, false);
+
         rvDetailBarang.setLayoutManager(new LinearLayoutManager(this));
         rvDetailBarang.setAdapter(adapter);
     }
+
 
     private void loadInvoiceDetail() {
         db.collection("invoices")

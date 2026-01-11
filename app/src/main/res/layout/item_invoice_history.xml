@@ -1,58 +1,200 @@
-<RelativeLayout
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:padding="16dp"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground">
+    android:layout_marginHorizontal="8dp"
+    android:layout_marginVertical="6dp"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp"
+    app:cardBackgroundColor="#FFFFFF"
+    android:clickable="true"
+    android:focusable="true"
+    android:foreground="?attr/selectableItemBackground">
 
-    <!-- Nomor Invoice -->
-    <TextView
-        android:id="@+id/tvNoInvoice"
-        android:textStyle="bold"
-        android:text="INV-20260108-001"
-        android:layout_width="wrap_content"
+    <RelativeLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:textColor="#000000"
-        android:textSize="16sp"/>
+        android:padding="16dp">
 
-    <!-- Nama Customer -->
-    <TextView
-        android:id="@+id/tvNamaCustomer"
-        android:text="Nama Customer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tvNoInvoice"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="2dp"
-        android:textColor="#555555"
-        android:textSize="14sp"/>
+        <!-- Left Accent Bar -->
+        <View
+            android:id="@+id/accentBar"
+            android:layout_width="4dp"
+            android:layout_height="match_parent"
+            android:layout_alignParentStart="true"
+            android:layout_marginEnd="12dp"
+            android:background="#1976D2"/>
 
-    <!-- Total Invoice -->
-    <TextView
-        android:id="@+id/tvTotal"
-        android:text="Rp 0"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/tvNamaCustomer"
-        android:layout_alignParentStart="true"
-        android:layout_marginTop="4dp"
-        android:textColor="#4CAF50"
-        android:textStyle="bold"
-        android:textSize="14sp"/>
+        <!-- Invoice Icon -->
+        <LinearLayout
+            android:id="@+id/iconContainer"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_toEndOf="@id/accentBar"
+            android:layout_alignParentTop="true"
+            android:background="@drawable/bg_invoice_icon_small"
+            android:gravity="center">
 
-    <!-- Tombol Delete di kanan -->
-    <ImageButton
-        android:id="@+id/btnDeleteItem"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_alignParentEnd="true"
-        android:layout_centerVertical="true"
-        android:background="?attr/selectableItemBackgroundBorderless"
-        android:src="@android:drawable/ic_menu_delete"
-        android:contentDescription="Hapus Invoice"
-        app:tint="#F44336"
-        android:padding="8dp"/>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="🧾"
+                android:textSize="22sp"/>
 
-</RelativeLayout>
+        </LinearLayout>
+
+        <!-- Tombol Delete di kanan -->
+        <LinearLayout
+            android:id="@+id/deleteContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFEBEE">
+
+                <ImageButton
+                    android:id="@+id/btnDeleteItem"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@drawable/ic_delete_invoice"
+                    android:contentDescription="Hapus Invoice"
+                    android:padding="10dp"/>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Hapus"
+                android:textSize="9sp"
+                android:textColor="#D32F2F"
+                android:textStyle="bold"
+                android:layout_marginTop="3dp"/>
+
+        </LinearLayout>
+
+        <!-- Content Container -->
+        <LinearLayout
+            android:id="@+id/contentContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/iconContainer"
+            android:layout_toStartOf="@id/deleteContainer"
+            android:layout_marginStart="12dp"
+            android:layout_marginEnd="8dp"
+            android:orientation="vertical">
+
+            <!-- Nomor Invoice -->
+            <TextView
+                android:id="@+id/tvNoInvoice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="INV-20260108-001"
+                android:textStyle="bold"
+                android:textColor="#212121"
+                android:textSize="16sp"
+                android:maxLines="1"
+                android:ellipsize="end"/>
+
+            <!-- Nama Customer -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="👤 "
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/tvNamaCustomer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Nama Customer"
+                    android:textColor="#616161"
+                    android:textSize="14sp"
+                    android:maxLines="1"
+                    android:ellipsize="end"/>
+
+            </LinearLayout>
+
+            <!-- Tanggal -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="3dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="📅 "
+                    android:textSize="11sp"/>
+
+                <TextView
+                    android:id="@+id/tvTanggal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="11 Jan 2026"
+                    android:textColor="#757575"
+                    android:textSize="12sp"/>
+
+            </LinearLayout>
+
+            <!-- Divider -->
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginVertical="8dp"
+                android:background="#E0E0E0"/>
+
+            <!-- Total Invoice -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_total_mini"
+                android:padding="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Total"
+                    android:textColor="#616161"
+                    android:textSize="12sp"/>
+
+                <TextView
+                    android:id="@+id/tvTotal"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Rp 0"
+                    android:textColor="#2E7D32"
+                    android:textStyle="bold"
+                    android:textSize="16sp"/>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+
+</com.google.android.material.card.MaterialCardView>
