@@ -80,4 +80,6 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
 
+    <color name="hint_color">#212121</color>
+
 </resources>

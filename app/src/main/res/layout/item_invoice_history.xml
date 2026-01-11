@@ -13,7 +13,9 @@
         android:text="INV-20260108-001"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"/>
+        android:layout_alignParentStart="true"
+        android:textColor="#000000"
+        android:textSize="16sp"/>
 
     <!-- Nama Customer -->
     <TextView
@@ -23,7 +25,9 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/tvNoInvoice"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="2dp"/>
+        android:layout_marginTop="2dp"
+        android:textColor="#555555"
+        android:textSize="14sp"/>
 
     <!-- Total Invoice -->
     <TextView
@@ -33,7 +37,10 @@
         android:layout_height="wrap_content"
         android:layout_below="@id/tvNamaCustomer"
         android:layout_alignParentStart="true"
-        android:layout_marginTop="4dp"/>
+        android:layout_marginTop="4dp"
+        android:textColor="#4CAF50"
+        android:textStyle="bold"
+        android:textSize="14sp"/>
 
     <!-- Tombol Delete di kanan -->
     <ImageButton
