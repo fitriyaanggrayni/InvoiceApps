@@ -262,10 +262,13 @@ public class AddInvoiceActivity extends AppCompatActivity {
         data.put("alamatUsaha", etAlamatUsaha.getText().toString());
         data.put("telpUsaha", etTelpUsaha.getText().toString());
 
-        data.put("noInvoice", etNoInvoice.getText().toString());
-        data.put("namaCustomer", etNama.getText().toString());
-        data.put("tanggal", etTanggal.getText().toString());
-        data.put("metodePembayaran", etPembayaran.getText().toString());
+        data.put("noInvoice", etNoInvoice.getText() != null ? etNoInvoice.getText().toString().trim() : "");
+        data.put("namaCustomer", etNama.getText() != null ? etNama.getText().toString().trim() : "");
+        data.put("tanggal", etTanggal.getText() != null ? etTanggal.getText().toString().trim() : "");
+        data.put("metodePembayaran", etPembayaran.getText() != null ? etPembayaran.getText().toString().trim() : "");
+        data.put("alamatCustomer", etAlamat.getText() != null ? etAlamat.getText().toString().trim() : "");
+        data.put("telpCustomer", etNoTelepon.getText() != null ? etNoTelepon.getText().toString().trim() : "");
+
 
         data.put("pajak", etPajak.getText().toString().isEmpty() ? 0 :
                 Double.parseDouble(etPajak.getText().toString()));

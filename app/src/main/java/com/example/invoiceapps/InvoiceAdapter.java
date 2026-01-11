@@ -63,17 +63,20 @@ public class InvoiceAdapter extends RecyclerView.Adapter<InvoiceAdapter.ViewHold
         holder.tvQty.setText("Qty: " + item.getQty());
         holder.tvHargaSatuan.setText("Rp " + format(item.getHargaSatuan()));
 
-        // Diskon
+        // Hitung nominal diskon per item
+        double kotor = item.getQty() * item.getHargaSatuan();
+        double nominalDiskon = kotor * (item.getDiskon() / 100);
+
+        // Diskon dengan nominal
         if (item.getDiskon() > 0) {
             holder.tvDiskon.setVisibility(View.VISIBLE);
-            holder.tvDiskon.setText("Diskon: " + item.getDiskon() + "%");
+            String diskonText = item.getDiskon() + "% (Rp " + format(nominalDiskon) + ")";
+            holder.tvDiskon.setText("Diskon: " + diskonText);
         } else {
             holder.tvDiskon.setVisibility(View.GONE);
         }
 
-        double totalHarga = item.getQty() * item.getHargaSatuan()
-                * (1 - item.getDiskon() / 100);
-
+        double totalHarga = kotor - nominalDiskon;
         holder.tvTotalHarga.setText("Rp " + format(totalHarga));
 
         // Tombol delete (mode edit)

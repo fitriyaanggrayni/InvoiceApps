@@ -294,17 +294,23 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 18;
         for (ItemInvoice item : invoice.getItems()) {
             double kotor = item.getQty() * item.getHargaSatuan();
-            double diskon = kotor * (item.getDiskon() / 100);
-            double totalItem = kotor - diskon;
+            double diskonNominal = kotor * (item.getDiskon() / 100);
+            double totalItem = kotor - diskonNominal;
 
             canvas.drawText(limitText(item.getNamaBarang(), MAX_ITEM_NAME_LENGTH), 40, y, tableText);
             canvas.drawText(String.valueOf(item.getQty()), 240, y, tableText);
             canvas.drawText(rupiah(item.getHargaSatuan()), 290, y, tableText);
-            canvas.drawText(item.getDiskon() + " %", 380, y, tableText);
+
+            String diskonText = String.format(Locale.getDefault(), "%.0f%% (Rp %s)",
+                    item.getDiskon(),
+                    rupiah(diskonNominal));
+            canvas.drawText(diskonText, 380, y, tableText);
+
             canvas.drawText(rupiah(totalItem), 470, y, tableText);
 
             y += 14;
         }
+
 
         y += 10;
         canvas.drawLine(330, y, 555, y, line);
