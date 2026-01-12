@@ -13,11 +13,12 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
+        android:background="@color/primary_color"
         android:elevation="4dp"
-        app:title="📋 Invoice Saya"
+        app:title="@string/invoice_saya"
         app:titleTextColor="@android:color/white"
         app:layout_constraintTop_toTopOf="parent" />
+
 
     <!-- Empty State -->
     <LinearLayout

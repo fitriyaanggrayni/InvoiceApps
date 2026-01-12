@@ -11,11 +11,13 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:title="Detail Invoice"
+        android:background="@color/primary_color"
+        android:elevation="4dp"
+        app:title="@string/detail_invoice"
         app:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/ic_arrow_back"
-        android:elevation="4dp"/>
+        app:navigationIconTint="@android:color/white" />
+
 
     <!-- Header Info & Total -->
     <LinearLayout

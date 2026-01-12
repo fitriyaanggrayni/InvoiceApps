@@ -23,6 +23,9 @@
     <string name="item_required">Nama, Qty, dan Harga wajib diisi</string>
     <string name="invalid_number">Format angka tidak valid</string>
     <string name="min_item">Tambahkan minimal 1 barang</string>
+    <string name="invoice_saya">Invoice Saya</string>
+    <string name="detail_invoice">Detail Invoice</string>
+
 
 
 

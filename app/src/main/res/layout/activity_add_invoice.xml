@@ -11,9 +11,9 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        android:title="Tambah Invoice"
-        android:titleTextColor="@android:color/white"
+        android:background="@color/primary_color"
+        android:title="@string/tambah_invoice"
+        app:titleTextColor="@android:color/white"
         android:elevation="4dp"
         app:navigationIcon="@drawable/ic_arrow_back"
         app:navigationIconTint="@android:color/white" />
@@ -530,6 +530,7 @@
                         android:layout_height="wrap_content"
                         android:text="Tambah Barang"
                         android:backgroundTint="#0D47A1"
+                        android:textColor="#FFFFFF"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
 
                 </LinearLayout>
@@ -750,7 +751,8 @@
                 android:layout_height="60dp"
                 android:text="Simpan Invoice"
                 android:textSize="18sp"
-                android:backgroundTint="?attr/colorPrimary"/>
+                android:backgroundTint="@color/primary_color"
+                android:textColor="#FFFFFF"/>
 
         </LinearLayout>
 
