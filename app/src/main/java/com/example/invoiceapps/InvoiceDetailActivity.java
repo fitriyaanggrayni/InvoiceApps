@@ -14,9 +14,10 @@ import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
+
+import android.widget.TextView;
+
 
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -34,16 +35,14 @@ import java.util.Map;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 
-
 public class InvoiceDetailActivity extends AppCompatActivity {
 
     private static final int MAX_ITEM_NAME_LENGTH = 18;
-    private static final int REQUEST_EDIT_INVOICE = 101;
-
     private TextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
+
+    //private androidx.appcompat.widget.AppCompatTextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
     private RecyclerView rvDetailBarang;
-    private Button btnDownloadPdf;
-    private MaterialButton btnEdit;
+    private MaterialButton btnDownloadPdf, btnEdit;
 
     private Invoice invoice;
     private List<ItemInvoice> itemList;
@@ -75,7 +74,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         initViews();
         setupRecyclerView();
 
-
         db = FirebaseFirestore.getInstance();
 
         invoiceId = getIntent().getStringExtra("invoiceId");
@@ -93,7 +91,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             i.putExtra("invoiceId", invoiceId);
             editLauncher.launch(i);
         });
-
 
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
@@ -116,8 +113,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
+
     private void reloadInvoice() {
         if (invoiceId != null) {
             loadInvoiceDetail();
@@ -137,11 +134,9 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     private void setupRecyclerView() {
         itemList = new ArrayList<>();
         adapter = new InvoiceAdapter(itemList, position -> {}, false);
-
         rvDetailBarang.setLayoutManager(new LinearLayoutManager(this));
         rvDetailBarang.setAdapter(adapter);
     }
-
 
     private void loadInvoiceDetail() {
         db.collection("invoices")
@@ -178,16 +173,15 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                         String logo = getMapString(c, "logoUri");
                         if (!logo.isEmpty()) logoUri = Uri.parse(logo);
                     } else {
-                        // Default kalau company kosong
                         namaToko = "";
                         alamatToko = "";
                         telpToko = "";
                         logoUri = null;
                     }
 
+                    // Isi itemList
                     itemList.clear();
                     List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
-
                     if (items != null) {
                         for (Map<String, Object> m : items) {
                             String namaBarang = m.get("namaBarang") != null ? m.get("namaBarang").toString() : "";
@@ -215,8 +209,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 });
     }
 
-    // ================= PDF & UTIL =================
-
+    // ================= UTIL =================
     private void hitungInvoice() {
         double sub = 0, disc = 0;
         for (ItemInvoice i : invoice.getItems()) {
@@ -233,6 +226,36 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         invoice.setTotal(after + tax + invoice.getBiayaPengiriman());
     }
 
+    private double getDouble(DocumentSnapshot doc, String key) {
+        Double v = doc.getDouble(key);
+        return v != null ? v : 0;
+    }
+
+    private String safeString(DocumentSnapshot doc, String key, String def) {
+        String v = doc.getString(key);
+        return v != null ? v : def;
+    }
+
+    private String getMapString(Map<String, Object> map, String key) {
+        Object v = map.get(key);
+        return v != null ? v.toString() : "";
+    }
+
+    private String rupiah(double v) {
+        return rupiahFormat.format(v);
+    }
+
+    private ActivityResultLauncher<Intent> editLauncher =
+            registerForActivityResult(
+                    new ActivityResultContracts.StartActivityForResult(),
+                    result -> {
+                        if (result.getResultCode() == RESULT_OK) {
+                            reloadInvoice(); // refresh otomatis
+                        }
+                    }
+            );
+
+    // ================= PDF GENERATION =================
     private File generatePdf() {
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
@@ -253,7 +276,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         Canvas canvas = page.getCanvas();
         int y = 40;
 
-        // LOGO
         if (logoUri != null) {
             try (InputStream is = getContentResolver().openInputStream(logoUri)) {
                 Bitmap logo = BitmapFactory.decodeStream(is);
@@ -273,21 +295,18 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(alamatToko, 120, y + 38, normal);
         canvas.drawText("Telp: " + telpToko, 120, y + 54, normal);
 
-        // JUDUL INVOICE
         bold.setTextSize(22);
         canvas.drawText("INVOICE", 420, y + 40, bold);
 
         y += 90;
         canvas.drawLine(40, y, 555, y, line);
 
-        // HEADER (Customer & Invoice info)
         y += 25;
         generatePdfHeader(canvas, y);
 
         y += 70;
         canvas.drawLine(40, y, 555, y, line);
 
-        // TABLE HEADER
         y += 25;
         canvas.drawText("Barang", 40, y, tableHeader);
         canvas.drawText("Qty", 240, y, tableHeader);
@@ -318,7 +337,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             y += 14;
         }
 
-
         y += 10;
         canvas.drawLine(330, y, 555, y, line);
 
@@ -335,8 +353,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         canvas.drawLine(330, y, 555, y, line);
 
-        y += 20;  // beri jarak setelah garis
-
+        y += 20;
         Paint boldSummary = new Paint();
         boldSummary.setTextSize(12);
         boldSummary.setFakeBoldText(true);
@@ -353,7 +370,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         pdf.finishPage(page);
 
-        // SIMPAN PDF
         File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Invoice Apps");
         if (!folder.exists() && !folder.mkdirs()) {
             Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
@@ -376,7 +392,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         return file;
     }
-
 
     private void generatePdfHeader(Canvas canvas, int yStart) {
         int y = yStart;
@@ -419,17 +434,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(jenisPembayaran, rightX + 110, y + 36, normal);
     }
 
-    private ActivityResultLauncher<Intent> editLauncher =
-            registerForActivityResult(
-                    new ActivityResultContracts.StartActivityForResult(),
-                    result -> {
-                        if (result.getResultCode() == RESULT_OK) {
-                            reloadInvoice(); // 🔥 refresh otomatis
-                        }
-                    }
-            );
-
-
     private void drawSummary(Canvas c, String label, double value, int y) {
         Paint p = new Paint();
         p.setTextSize(10);
@@ -437,28 +441,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         c.drawText(rupiah(value), 470, y, p);
     }
 
-
-    private double getDouble(DocumentSnapshot doc, String key) {
-        Double v = doc.getDouble(key);
-        return v != null ? v : 0;
-    }
-
-    private String safeString(DocumentSnapshot doc, String key, String def) {
-        String v = doc.getString(key);
-        return v != null ? v : def;
-    }
-
-    private String getMapString(Map<String, Object> map, String key) {
-        Object v = map.get(key);
-        return v != null ? v.toString() : "";
-    }
-
     private String limitText(String text, int max) {
         if (text == null) return "";
         return text.length() > max ? text.substring(0, max) + "…" : text;
-    }
-
-    private String rupiah(double v) {
-        return rupiahFormat.format(v);
     }
 }
