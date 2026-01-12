@@ -35,6 +35,8 @@ import java.util.Map;
 
 import android.widget.AutoCompleteTextView;
 import android.widget.ArrayAdapter;
+import com.google.firebase.firestore.SetOptions;
+
 
 public class AddInvoiceActivity extends AppCompatActivity {
 
@@ -77,14 +79,6 @@ public class AddInvoiceActivity extends AppCompatActivity {
     private boolean isEdit = false;
     private String invoiceId;
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        if (isEdit && invoiceId != null) {
-            loadInvoiceForEdit(invoiceId);
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,22 +92,31 @@ public class AddInvoiceActivity extends AppCompatActivity {
         setupRecycler();
         setupListener();
 
-        // Cek jika ini mode edit dan ada invoiceId dari Intent
         Intent intent = getIntent();
         isEdit = intent.getBooleanExtra("isEdit", false);
+
         if (isEdit) {
             invoiceId = intent.getStringExtra("invoiceId");
             if (invoiceId != null && !invoiceId.isEmpty()) {
+                setTitle("Edit Invoice");
+                btnSimpan.setText("Update Invoice");
 
+                //LOCK NO INVOICE SAAT EDIT
+                etNoInvoice.setEnabled(false);
+                etNoInvoice.setFocusable(false);
+
+                loadInvoiceForEdit(invoiceId);
             } else {
                 Toast.makeText(this, "Invoice ID tidak ditemukan untuk edit", Toast.LENGTH_SHORT).show();
                 finish();
             }
         } else {
+            setTitle("Tambah Invoice");
             generateNoInvoice();
             setTanggalHariIni();
         }
     }
+
 
     // ================= INIT =================
     private void initViews() {
@@ -282,54 +285,51 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     // ================= SIMPAN =================
     private void simpanInvoice() {
-
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) {
-            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
+        if (listInvoice.isEmpty()) {
+            Toast.makeText(this, "Tambahkan minimal 1 barang", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user == null) return;
 
         Map<String, Object> data = new HashMap<>();
 
-        // ===== LOGO =====
         data.put("logoUri", logoUri != null ? logoUri.toString() : "");
-
-        // ===== USAHA =====
         data.put("namaUsaha", etNamaUsaha.getText().toString());
         data.put("alamatUsaha", etAlamatUsaha.getText().toString());
         data.put("telpUsaha", etTelpUsaha.getText().toString());
 
-        // ===== INVOICE =====
-        data.put("noInvoice", etNoInvoice.getText().toString().trim());
-        data.put("namaCustomer", etNama.getText().toString().trim());
-        data.put("tanggal", etTanggal.getText().toString().trim());
-        data.put("metodePembayaran", etPembayaran.getText().toString().trim());
-        data.put("alamatCustomer", etAlamat.getText().toString().trim());
-        data.put("telpCustomer", etNoTelepon.getText().toString().trim());
+        data.put("noInvoice", etNoInvoice.getText() != null ? etNoInvoice.getText().toString().trim() : "");
+        data.put("namaCustomer", etNama.getText() != null ? etNama.getText().toString().trim() : "");
+        data.put("tanggal", etTanggal.getText() != null ? etTanggal.getText().toString().trim() : "");
+        data.put("metodePembayaran", etPembayaran.getText() != null ? etPembayaran.getText().toString().trim() : "");
+        data.put("alamatCustomer", etAlamat.getText() != null ? etAlamat.getText().toString().trim() : "");
+        data.put("telpCustomer", etNoTelepon.getText() != null ? etNoTelepon.getText().toString().trim() : "");
 
-        double pajak = etPajak.getText().toString().isEmpty() ? 0 :
-                Double.parseDouble(etPajak.getText().toString());
 
-        double ongkir = etBiayaPengiriman.getText().toString().isEmpty() ? 0 :
-                Double.parseDouble(etBiayaPengiriman.getText().toString());
+        data.put("pajak", etPajak.getText().toString().isEmpty() ? 0 :
+                Double.parseDouble(etPajak.getText().toString()));
 
-        data.put("pajak", pajak);
-        data.put("biayaPengiriman", ongkir);
+        data.put("biayaPengiriman", etBiayaPengiriman.getText().toString().isEmpty() ? 0 :
+                Double.parseDouble(etBiayaPengiriman.getText().toString()));
 
-        // ===== TOTAL =====
+
+        data.put("namaAdmin", namaAdmin);
+        data.put("namaPenerima", namaPenerima);
+
         data.put("subTotal", parse(tvSubTotal.getText().toString()));
         data.put("totalDiskon", parse(tvDiskonTotal.getText().toString()));
         data.put("total", parse(tvTotal.getText().toString()));
-
         data.put("userId", user.getUid());
 
-        if (!isEdit) {
+        if (isEdit) {
+            data.put("updatedAt", new java.util.Date());
+        } else {
             data.put("createdAt", new java.util.Date());
         }
 
-        // ===== ITEMS =====
+
         List<Map<String, Object>> items = new ArrayList<>();
         for (ItemInvoice i : listInvoice) {
             Map<String, Object> m = new HashMap<>();
@@ -341,89 +341,38 @@ public class AddInvoiceActivity extends AppCompatActivity {
         }
         data.put("items", items);
 
-        // ===== COMPANY =====
+        // ================= COMPANY PROFILE (PER INVOICE) =================
         Map<String, Object> company = new HashMap<>();
         company.put("namaUsaha", etNamaUsaha.getText().toString());
         company.put("alamat", etAlamatUsaha.getText().toString());
         company.put("telp", etTelpUsaha.getText().toString());
         company.put("logoUri", logoUri != null ? logoUri.toString() : "");
+
+// simpan ke invoice
         data.put("company", company);
 
-        // ===== SIMPAN / UPDATE =====
+
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
         if (isEdit && invoiceId != null) {
+            // UPDATE
             db.collection("invoices")
                     .document(invoiceId)
-                    .set(data)
-                    .addOnSuccessListener(unused -> {
+                    .set(data, SetOptions.merge())
+                    .addOnSuccessListener(v -> {
                         Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
-                        setResult(RESULT_OK);
                         finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Gagal update: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                    );
+                    });
         } else {
+            // ADD
             db.collection("invoices")
                     .add(data)
-                    .addOnSuccessListener(unused -> {
+                    .addOnSuccessListener(d -> {
                         Toast.makeText(this, "Invoice berhasil disimpan", Toast.LENGTH_SHORT).show();
                         finish();
-                    })
-                    .addOnFailureListener(e ->
-                            Toast.makeText(this, "Gagal simpan: " + e.getMessage(), Toast.LENGTH_LONG).show()
-                    );
+                    });
         }
-    }
 
-
-    private void simpanInvoiceEdit(String invoiceId) {
-
-        Map<String, Object> data = new HashMap<>();
-
-        data.put("noInvoice", etNoInvoice.getText().toString());
-        data.put("namaCustomer", etNama.getText().toString());
-        data.put("alamatCustomer", etAlamat.getText().toString());
-        data.put("telpCustomer", etNoTelepon.getText().toString());
-        data.put("tanggal", etTanggal.getText().toString());
-        data.put("metodePembayaran", etPembayaran.getText().toString());
-        data.put("pajak", Double.parseDouble(etPajak.getText().toString()));
-        data.put("biayaPengiriman",
-                Double.parseDouble(etBiayaPengiriman.getText().toString()));
-
-        // ===== ITEMS =====
-        List<Map<String, Object>> items = new ArrayList<>();
-        for (ItemInvoice item : listInvoice) {
-            Map<String, Object> map = new HashMap<>();
-            map.put("namaBarang", item.getNamaBarang());
-            map.put("qty", item.getQty());
-            map.put("hargaSatuan", item.getHargaSatuan());
-            map.put("diskon", item.getDiskon());
-            items.add(map);
-        }
-        data.put("items", items);
-
-        // ===== COMPANY =====
-        Map<String, Object> company = new HashMap<>();
-        company.put("namaUsaha", etNamaUsaha.getText().toString());
-        company.put("alamat", etAlamatUsaha.getText().toString());
-        company.put("telp", etTelpUsaha.getText().toString());
-        company.put("logoUri", logoUri != null ? logoUri.toString() : "");
-        data.put("company", company);
-
-        // ===== UPDATE FIRESTORE =====
-        FirebaseFirestore.getInstance()
-                .collection("invoices")
-                .document(invoiceId)
-                .update(data)
-                .addOnSuccessListener(unused -> {
-                    Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
-                    setResult(RESULT_OK);
-                    finish();
-                })
-                .addOnFailureListener(e ->
-                        Toast.makeText(this, "Gagal menyimpan: " + e.getMessage(),
-                                Toast.LENGTH_LONG).show()
-                );
     }
 
 

@@ -18,6 +18,15 @@ import java.util.Locale;
 
 public class InvoiceHistoryAdapter extends RecyclerView.Adapter<InvoiceHistoryAdapter.ViewHolder> {
 
+    public void updateData(List<Invoice> newInvoiceList) {
+        invoiceList.clear();
+        if (newInvoiceList != null) {
+            invoiceList.addAll(newInvoiceList);
+        }
+        notifyDataSetChanged();
+    }
+
+
     // ===== INTERFACE DELETE =====
     public interface OnItemDeleteListener {
         void onItemDelete(int position);
