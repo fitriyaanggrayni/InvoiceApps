@@ -34,6 +34,7 @@ import java.util.Map;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import com.google.android.material.appbar.MaterialToolbar;
 
 public class InvoiceDetailActivity extends AppCompatActivity {
 
@@ -67,6 +68,19 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_invoice_detail);
+
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // Tampilkan tombol back
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+
+        // Handle klik tombol back
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+
 
         rupiahFormat = NumberFormat.getCurrencyInstance(new Locale("in", "ID"));
         rupiahFormat.setMaximumFractionDigits(0);

@@ -13,6 +13,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.material.appbar.MaterialToolbar;
+
+
+import androidx.appcompat.widget.Toolbar;
+import androidx.appcompat.app.AppCompatActivity;
+
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -85,6 +92,21 @@ public class AddInvoiceActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_invoice);
 
+        // Inisialisasi MaterialToolbar
+        MaterialToolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);
+
+        // Tampilkan tombol back
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayShowHomeEnabled(true);
+        }
+
+        // Fungsi back saat icon ditekan
+        toolbar.setNavigationOnClickListener(v -> onBackPressed());
+
+
+        // Inisialisasi view lain
         initViews();
         setupRupiah();
         setupMetodePembayaran();
@@ -116,7 +138,6 @@ public class AddInvoiceActivity extends AppCompatActivity {
             setTanggalHariIni();
         }
     }
-
 
     // ================= INIT =================
     private void initViews() {
