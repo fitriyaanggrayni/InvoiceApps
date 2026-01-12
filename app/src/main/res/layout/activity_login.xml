@@ -71,11 +71,13 @@
                         android:id="@+id/editTextEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Email"
+                        android:hint="@string/email"
                         android:inputType="textEmailAddress"
                         android:drawableStart="@drawable/ic_email"
                         android:drawablePadding="12dp"
-                        android:textSize="15sp" />
+                        android:textSize="15sp"
+                        android:textColor="@android:color/black" />
+
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Password -->
@@ -90,11 +92,13 @@
                         android:id="@+id/editTextPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Password"
+                        android:hint="@string/password"
                         android:inputType="textPassword"
                         android:drawableStart="@drawable/ic_lock"
                         android:drawablePadding="12dp"
-                        android:textSize="15sp" />
+                        android:textSize="15sp"
+                        android:textColor="@android:color/black" />
+
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <!-- Forgot -->

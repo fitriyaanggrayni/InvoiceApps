@@ -25,8 +25,11 @@
     <string name="min_item">Tambahkan minimal 1 barang</string>
     <string name="invoice_saya">Invoice Saya</string>
     <string name="detail_invoice">Detail Invoice</string>
-
-
-
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="hint_email">Masukkan email</string>
+    <string name="hint_password">Masukkan password</string>
+    <string name="hint_confirm_password">Masukkan ulang password</string>
+    <string name="hint_email_input">Masukkan email Anda</string>
 
 </resources>

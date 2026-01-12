@@ -26,34 +26,37 @@
             android:id="@+id/editTextEmail"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Masukan email"
+            android:hint="@string/hint_email"
             android:layout_marginTop="16dp"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
             android:inputType="textEmailAddress"
-            android:textColor="#000000"/>
+            android:textColor="@android:color/black"
+            android:textColorHint="#888888" />
 
         <EditText
             android:id="@+id/editTextPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Masukan password"
+            android:hint="@string/hint_password"
             android:layout_marginTop="12dp"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
             android:inputType="textPassword"
-            android:textColor="#000000"/>
+            android:textColor="@android:color/black"
+            android:textColorHint="#888888" />
 
         <EditText
             android:id="@+id/editTextConfirmPassword"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Masukan ulang password"
+            android:hint="@string/hint_confirm_password"
             android:layout_marginTop="12dp"
             android:background="@drawable/edittext_bg"
             android:padding="12dp"
             android:inputType="textPassword"
-            android:textColor="#000000"/>
+            android:textColor="@android:color/black"
+            android:textColorHint="#888888" />
 
         <Button
             android:id="@+id/btnRegister"

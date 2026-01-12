@@ -12,11 +12,11 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/primary_color"
-        android:title="@string/tambah_invoice"
+        android:titleTextColor="@android:color/white"
+        app:title="Tambah Invoice"
         app:titleTextColor="@android:color/white"
-        android:elevation="4dp"
         app:navigationIcon="@drawable/ic_arrow_back"
-        app:navigationIconTint="@android:color/white" />
+        android:elevation="4dp"/>
 
     <!-- ScrollView Content -->
     <ScrollView
@@ -529,8 +529,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Tambah Barang"
-                        android:backgroundTint="#0D47A1"
                         android:textColor="#FFFFFF"
+                        android:backgroundTint="#0D47A1"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
 
                 </LinearLayout>
@@ -750,9 +750,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:text="Simpan Invoice"
+                android:textColor="#FFFFFF"
                 android:textSize="18sp"
-                android:backgroundTint="@color/primary_color"
-                android:textColor="#FFFFFF"/>
+                android:backgroundTint="@color/primary_color"/>
 
         </LinearLayout>
 
