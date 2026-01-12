@@ -15,19 +15,14 @@ import android.widget.Toast;
 
 import com.google.android.material.appbar.MaterialToolbar;
 
-
-import androidx.appcompat.widget.Toolbar;
 import androidx.appcompat.app.AppCompatActivity;
 
-
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.DecimalFormat;
@@ -41,7 +36,6 @@ import java.util.Locale;
 import java.util.Map;
 
 import android.widget.AutoCompleteTextView;
-import android.widget.ArrayAdapter;
 import com.google.firebase.firestore.SetOptions;
 
 
@@ -59,7 +53,6 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     // ====== INVOICE ======
     private TextInputEditText etNoInvoice, etTanggal;
-    private ArrayAdapter<String> pembayaranAdapter;
     private AutoCompleteTextView etPembayaran;
 
     // ====== ITEM ======
@@ -75,13 +68,10 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     // ====== DATA ======
     private InvoiceAdapter invoiceAdapter;
-    private List<ItemInvoice> listInvoice = new ArrayList<>();
+    private final List<ItemInvoice> listInvoice = new ArrayList<>();
     private DecimalFormat rupiahFormat;
 
-    // ====== PEMBAYARAN ======
-    private String namaAdmin = "-";
-    private String namaPenerima = "-";
-
+    private final String namaPenerima = "-";
     // ====== EDIT MODE ======
     private boolean isEdit = false;
     private String invoiceId;
@@ -103,8 +93,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
         }
 
         // Fungsi back saat icon ditekan
-        toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
+        toolbar.setNavigationOnClickListener(v ->
+                getOnBackPressedDispatcher().onBackPressed()
+        );
 
         // Inisialisasi view lain
         initViews();
@@ -120,8 +111,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
         if (isEdit) {
             invoiceId = intent.getStringExtra("invoiceId");
             if (invoiceId != null && !invoiceId.isEmpty()) {
-                setTitle("Edit Invoice");
-                btnSimpan.setText("Update Invoice");
+                setTitle(getString(R.string.edit_invoice));
+                btnSimpan.setText(getString(R.string.update_invoice));
+
 
                 //LOCK NO INVOICE SAAT EDIT
                 etNoInvoice.setEnabled(false);
@@ -133,7 +125,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
                 finish();
             }
         } else {
-            setTitle("Tambah Invoice");
+            setTitle(getString(R.string.tambah_invoice));
             generateNoInvoice();
             setTanggalHariIni();
         }
@@ -162,8 +154,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
         etHargaSatuan = findViewById(R.id.etHargaSatuan);
         etDiskon = findViewById(R.id.etDiskon);
 
-        btnTambahBarang = findViewById(R.id.btnTambahBarang);
-        rvBarang = findViewById(R.id.rvBarang);
+        btnTambahBarang = findViewById(R.id.btnTambahBarang);        rvBarang = findViewById(R.id.rvBarang);
 
         tvSubTotal = findViewById(R.id.tvSubTotal);
         tvDiskonTotal = findViewById(R.id.tvDiskonTotal);
@@ -186,8 +177,11 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     private void setupMetodePembayaran() {
         String[] metode = {"Tunai", "Transfer Bank", "E-Wallet", "Kartu Debit", "Kartu Kredit", "COD"};
-        pembayaranAdapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_dropdown_item_1line, metode);
+        ArrayAdapter<String> pembayaranAdapter =
+                new ArrayAdapter<>(this,
+                        android.R.layout.simple_dropdown_item_1line,
+                        metode);
+
         etPembayaran.setAdapter(pembayaranAdapter);
     }
 
@@ -336,6 +330,8 @@ public class AddInvoiceActivity extends AppCompatActivity {
                 Double.parseDouble(etBiayaPengiriman.getText().toString()));
 
 
+        // ====== PEMBAYARAN ======
+        String namaAdmin = "-";
         data.put("namaAdmin", namaAdmin);
         data.put("namaPenerima", namaPenerima);
 
@@ -466,12 +462,29 @@ public class AddInvoiceActivity extends AppCompatActivity {
                                 (List<Map<String, Object>>) itemsObj;
 
                         for (Map<String, Object> m : items) {
+                            String namaBarang = m.get("namaBarang") != null
+                                    ? m.get("namaBarang").toString()
+                                    : "";
+
+                            int qty = m.get("qty") instanceof Number
+                                    ? ((Number) m.get("qty")).intValue()
+                                    : 0;
+
+                            double hargaSatuan = m.get("hargaSatuan") instanceof Number
+                                    ? ((Number) m.get("hargaSatuan")).doubleValue()
+                                    : 0.0;
+
+                            double diskon = m.get("diskon") instanceof Number
+                                    ? ((Number) m.get("diskon")).doubleValue()
+                                    : 0.0;
+
                             listInvoice.add(new ItemInvoice(
-                                    String.valueOf(m.get("namaBarang")),
-                                    ((Number) m.get("qty")).intValue(),
-                                    ((Number) m.get("hargaSatuan")).doubleValue(),
-                                    ((Number) m.get("diskon")).doubleValue()
+                                    namaBarang,
+                                    qty,
+                                    hargaSatuan,
+                                    diskon
                             ));
+
                         }
                     }
 
