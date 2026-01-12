@@ -361,8 +361,14 @@ public class AddInvoiceActivity extends AppCompatActivity {
                     .set(data, SetOptions.merge())
                     .addOnSuccessListener(v -> {
                         Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
+
+                        Intent result = new Intent();
+                        result.putExtra("updated", true);
+                        setResult(RESULT_OK, result);
+
                         finish();
                     });
+
         } else {
             // ADD
             db.collection("invoices")
