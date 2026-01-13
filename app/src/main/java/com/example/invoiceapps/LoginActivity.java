@@ -57,14 +57,12 @@ public class LoginActivity extends AppCompatActivity {
 
         // Tombol Daftar
         textToRegister.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(LoginActivity.this, RegisterActivity.class));
         });
 
         // Tombol Lupa Password
         textForgotPassword.setOnClickListener(v -> {
-            Intent intent = new Intent(LoginActivity.this, ResetPasswordActivity.class);
-            startActivity(intent);
+            startActivity(new Intent(LoginActivity.this, ResetPasswordActivity.class));
         });
     }
 }

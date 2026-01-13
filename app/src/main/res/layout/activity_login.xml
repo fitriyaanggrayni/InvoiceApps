@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background"
@@ -35,14 +36,16 @@
                 android:textSize="26sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
-                android:layout_marginBottom="4dp" />
+                android:layout_marginBottom="4dp"
+                tools:ignore="HardcodedText" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Masuk untuk melanjutkan"
+                android:textColor="#E3F2FD"
                 android:textSize="15sp"
-                android:textColor="#CCFFFFFF" />
+                tools:ignore="HardcodedText" />
         </LinearLayout>
 
         <!-- Login Card -->
@@ -71,12 +74,13 @@
                         android:id="@+id/editTextEmail"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/email"
-                        android:inputType="textEmailAddress"
                         android:drawableStart="@drawable/ic_email"
                         android:drawablePadding="12dp"
+                        android:hint="@string/email"
+                        android:inputType="textEmailAddress"
+                        android:textColor="@android:color/black"
                         android:textSize="15sp"
-                        android:textColor="@android:color/black" />
+                        tools:ignore="VisualLintTextFieldSize,TextContrastCheck" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -92,12 +96,13 @@
                         android:id="@+id/editTextPassword"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="@string/password"
-                        android:inputType="textPassword"
                         android:drawableStart="@drawable/ic_lock"
                         android:drawablePadding="12dp"
+                        android:hint="@string/password"
+                        android:inputType="textPassword"
+                        android:textColor="@android:color/black"
                         android:textSize="15sp"
-                        android:textColor="@android:color/black" />
+                        tools:ignore="TextContrastCheck,VisualLintTextFieldSize" />
 
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -107,23 +112,26 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
+                    android:paddingVertical="8dp"
                     android:text="Lupa password?"
-                    android:textSize="13sp"
                     android:textColor="@color/primary_color"
-                    android:paddingVertical="8dp" />
+                    android:textSize="13sp"
+                    tools:ignore="HardcodedText,TextContrastCheck" />
 
                 <!-- Login Button -->
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btnLogin"
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
-                    android:text="Masuk"
+                    android:text="@string/masuk"
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:textAllCaps="false"
                     android:layout_marginTop="8dp"
                     app:cornerRadius="26dp"
-                    android:backgroundTint="@color/primary_color" />
+                    android:backgroundTint="@color/primary_color"
+                    android:textColor="#FFFFFF"
+                    tools:ignore="VisualLintButtonSize" />
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>
@@ -140,8 +148,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Belum punya akun?"
+                android:textColor="#CCFFFFFF"
                 android:textSize="15sp"
-                android:textColor="#CCFFFFFF" />
+                tools:ignore="HardcodedText,TextContrastCheck" />
 
             <TextView
                 android:id="@+id/textToRegister"
@@ -150,7 +159,8 @@
                 android:text="Daftar"
                 android:textSize="15sp"
                 android:textColor="#FFFFFF"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                tools:ignore="HardcodedText" />
 
         </LinearLayout>
 

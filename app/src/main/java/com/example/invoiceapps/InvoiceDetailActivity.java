@@ -5,6 +5,8 @@ import androidx.core.content.FileProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import android.util.Base64;
+
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,11 +15,9 @@ import android.graphics.Paint;
 import android.graphics.pdf.PdfDocument;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.Environment;
 import android.widget.Toast;
 
 import android.widget.TextView;
-
 
 import com.google.android.material.button.MaterialButton;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -25,7 +25,6 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.InputStream;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,9 +38,8 @@ import com.google.android.material.appbar.MaterialToolbar;
 public class InvoiceDetailActivity extends AppCompatActivity {
 
     private static final int MAX_ITEM_NAME_LENGTH = 18;
-    private TextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
 
-    //private androidx.appcompat.widget.AppCompatTextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
+    private TextView tvNoInvoice, tvNamaCustomer, tvTanggal, tvTotal;
     private RecyclerView rvDetailBarang;
     private MaterialButton btnDownloadPdf, btnEdit;
 
@@ -55,14 +53,12 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
     // PDF data
     private String jenisPembayaran = "-";
-    private String namaAdmin = "Administrator";
-    private String namaPenerima = "Penerima";
-    private Uri logoUri;
     private String namaToko = "";
     private String alamatToko = "";
     private String telpToko = "";
     private String alamatCustomer = "-";
     private String telpCustomer = "-";
+    private Bitmap logoBitmap;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,16 +67,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         MaterialToolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        // Tampilkan tombol back
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
         }
-
-        // Handle klik tombol back
         toolbar.setNavigationOnClickListener(v -> onBackPressed());
-
 
         rupiahFormat = NumberFormat.getCurrencyInstance(new Locale("in", "ID"));
         rupiahFormat.setMaximumFractionDigits(0);
@@ -184,16 +175,25 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                         alamatToko = getMapString(c, "alamat");
                         telpToko = getMapString(c, "telp");
 
-                        String logo = getMapString(c, "logoUri");
-                        if (!logo.isEmpty()) logoUri = Uri.parse(logo);
+                        String logoBase64 = getMapString(c, "logoBase64");
+                        if (!logoBase64.isEmpty()) {
+                            try {
+                                byte[] bytes = Base64.decode(logoBase64, Base64.DEFAULT);
+                                logoBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                logoBitmap = null;
+                            }
+                        } else {
+                            logoBitmap = null;
+                        }
                     } else {
                         namaToko = "";
                         alamatToko = "";
                         telpToko = "";
-                        logoUri = null;
+                        logoBitmap = null;
                     }
 
-                    // Isi itemList
                     itemList.clear();
                     List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
                     if (items != null) {
@@ -223,7 +223,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 });
     }
 
-    // ================= UTIL =================
     private void hitungInvoice() {
         double sub = 0, disc = 0;
         for (ItemInvoice i : invoice.getItems()) {
@@ -264,12 +263,12 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     new ActivityResultContracts.StartActivityForResult(),
                     result -> {
                         if (result.getResultCode() == RESULT_OK) {
-                            reloadInvoice(); // refresh otomatis
+                            reloadInvoice();
                         }
                     }
             );
 
-    // ================= PDF GENERATION =================
+    // =============== PDF GENERATION =================
     private File generatePdf() {
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
@@ -290,19 +289,13 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         Canvas canvas = page.getCanvas();
         int y = 40;
 
-        if (logoUri != null) {
-            try (InputStream is = getContentResolver().openInputStream(logoUri)) {
-                Bitmap logo = BitmapFactory.decodeStream(is);
-                if (logo != null) {
-                    Bitmap scaled = Bitmap.createScaledBitmap(logo, 70, 70, false);
-                    canvas.drawBitmap(scaled, 40, y, normal);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        // Logo toko
+        if (logoBitmap != null) {
+            Bitmap scaled = Bitmap.createScaledBitmap(logoBitmap, 70, 70, false);
+            canvas.drawBitmap(scaled, 40, y, normal);
         }
 
-        // INFO TOKO
+        // Info toko
         bold.setTextSize(14);
         canvas.drawText(namaToko, 120, y + 20, bold);
         normal.setTextSize(11);
@@ -354,7 +347,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 10;
         canvas.drawLine(330, y, 555, y, line);
 
-        // SUMMARY
+        // Summary
         y += 20;
         drawSummary(canvas, "Sub Total", invoice.getSubTotal(), y);
         y += 18;
@@ -384,7 +377,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         pdf.finishPage(page);
 
-        File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "Invoice Apps");
+        // Simpan PDF ke folder app
+        File folder = new File(getExternalFilesDir("Invoices"), "");
         if (!folder.exists() && !folder.mkdirs()) {
             Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
             pdf.close();
@@ -404,6 +398,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             pdf.close();
         }
 
+        Toast.makeText(this, "PDF berhasil disimpan di " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
         return file;
     }
 

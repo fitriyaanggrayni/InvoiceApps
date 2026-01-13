@@ -1,5 +1,6 @@
 package com.example.invoiceapps;
 
+/** @noinspection ALL*/
 public class Company {
     private String namaUsaha;
     private String alamat;

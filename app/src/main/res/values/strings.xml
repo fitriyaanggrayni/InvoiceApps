@@ -31,5 +31,6 @@
     <string name="hint_password">Masukkan password</string>
     <string name="hint_confirm_password">Masukkan ulang password</string>
     <string name="hint_email_input">Masukkan email Anda</string>
+    <string name="masuk">Masuk</string>
 
 </resources>
