@@ -732,31 +732,56 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             y += 18;
         }
 
+        // Garis bawah tabel
         canvas.drawLine(40, y, 555, y, line);
-        y += 25;
+        y += 10; // jarak sebelum Total
 
-        // ================= TERBILANG =================
-        canvas.drawText("Terbilang :", 40, y, bold);
+// ================= TERBILANG =================
+        String terbilangText = angkaKeTerbilang((long) invoice.getTotal());
+        int maxCharPerLine = 25; // maksimal karakter per baris kotak
+        int lineHeight = 15;
 
+// Split teks terbilang menjadi beberapa baris
+        List<String> lines = new ArrayList<>();
+        for (int start = 0; start < terbilangText.length(); start += maxCharPerLine) {
+            int end = Math.min(start + maxCharPerLine, terbilangText.length());
+            lines.add(terbilangText.substring(start, end));
+        }
+
+// Tentukan posisi kotak terbilang
+        int boxLeft = 40;
+        int boxRight = 350;
+        int boxTop = y + 15; // beri jarak dari garis bawah tabel
+        int boxBottom = boxTop + lines.size() * lineHeight + 10;
+
+// Label "Terbilang:" di atas kotak (di luar kotak)
+        bold.setTextSize(11);
+        canvas.drawText("Terbilang:", boxLeft, y + 12, bold);
+
+// Gambar kotak terbilang
         Paint box = new Paint();
         box.setStyle(Paint.Style.STROKE);
         box.setStrokeWidth(2);
-        canvas.drawRect(40, y + 8, 350, y + 45, box);
+        canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, box);
 
-        canvas.drawText(
-                angkaKeTerbilang((long) invoice.getTotal()),
-                45,
-                y + 30,
-                normal
-        );
+// Tulis isi kotak, mulai dari dalam kotak
+        normal.setTextSize(11);
+        int textY = boxTop + 15; // beri jarak dari atas kotak
+        for (String lineText : lines) {
+            canvas.drawText(lineText, boxLeft + 5, textY, normal);
+            textY += lineHeight;
+        }
 
-
-        // ================= TOTAL =================
+// ================= TOTAL =================
+// Total di sebelah kanan kotak, sejajar dengan kotak tapi lebih dinaikkan
         bold.setTextSize(12);
-        canvas.drawText("Total", 400, y + 30, bold);
-        canvas.drawText(rupiah(invoice.getTotal()), 450, y + 30, bold);
+        int totalY = boxTop + (boxBottom - boxTop) / 2 - 12; // dikurangi 12px agar naik lebih tinggi
+        canvas.drawText("Total:", col[3], totalY, bold);
+        canvas.drawText(rupiah(invoice.getTotal()), col[4], totalY, bold);
 
-        y += 90;
+
+// Update y untuk TTD
+        y = boxBottom + 20;
 
         // ================= TTD =================
         canvas.drawText("Diterima oleh,", 80, y, normal);
@@ -768,7 +793,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         pdf.finishPage(page);
 
-        // ================= SIMPAN (SAMA SEPERTI KASIR 1) =================
+        // ================= SIMPAN =================
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME,
                 "Invoice_" + invoice.getNoInvoice() + "_Kasir3.pdf");
