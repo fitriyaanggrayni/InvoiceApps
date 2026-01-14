@@ -35,6 +35,14 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import com.google.android.material.appbar.MaterialToolbar;
 
+import android.content.ContentValues;
+import android.net.Uri;
+import android.os.Environment;
+import android.provider.MediaStore;
+
+import java.io.OutputStream;
+
+
 public class InvoiceDetailActivity extends AppCompatActivity {
 
     private static final int MAX_ITEM_NAME_LENGTH = 18;
@@ -109,47 +117,41 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             new androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Pilih Template PDF")
                     .setItems(pilihan, (dialog, which) -> {
-                        File pdf = null;
+
+                        Uri pdfUri = null;
 
                         switch (which) {
                             case 0:
-                                pdf = generatePdfKasir1(); // TEMPLATE LAMA
+                                pdfUri = generatePdfKasir1();
                                 break;
-
                             case 1:
-                                pdf = generatePdfKasir2();
+                                pdfUri = generatePdfKasir2();
                                 break;
-
                             case 2:
-                                pdf = generatePdfKasir3();
+                                pdfUri = generatePdfKasir3();
                                 break;
                         }
 
-                        if (pdf == null || !pdf.exists()) {
+                        if (pdfUri == null) {
                             Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
                             return;
                         }
 
                         try {
-                            Uri uri = FileProvider.getUriForFile(
-                                    this,
-                                    getPackageName() + ".provider",
-                                    pdf
-                            );
-
-                            Intent i = new Intent(Intent.ACTION_VIEW);
-                            i.setDataAndType(uri, "application/pdf");
-                            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                            startActivity(i);
+                            Intent intent = new Intent(Intent.ACTION_VIEW);
+                            intent.setDataAndType(pdfUri, "application/pdf");
+                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(intent);
 
                         } catch (Exception e) {
-                            Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(this, "Tidak ada aplikasi PDF", Toast.LENGTH_SHORT).show();
                             e.printStackTrace();
                         }
                     })
                     .setNegativeButton("Batal", null)
                     .show();
         });
+
 
     }
 
@@ -327,7 +329,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             );
 
     // =============== PDF GENERATION =================
-    private File generatePdfKasir1() {
+    private Uri generatePdfKasir1() {
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
         Paint bold = new Paint();
@@ -436,31 +438,34 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         pdf.finishPage(page);
 
         // Simpan PDF ke folder app
-        File folder = new File(getExternalFilesDir("Invoices"), "");
-        if (!folder.exists() && !folder.mkdirs()) {
-            Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
-            pdf.close();
-            return null;
-        }
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME,
+                "Invoice_" + invoice.getNoInvoice() + ".pdf");
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOCUMENTS + "/Invoice Apps");
 
-        File file = new File(folder, "Invoice_" + invoice.getNoInvoice() + ".pdf");
+        Uri uri = getContentResolver().insert(
+                MediaStore.Files.getContentUri("external"), values);
 
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            pdf.writeTo(fos);
+        if (uri == null) return null;
+
+        try (java.io.OutputStream os =
+                     getContentResolver().openOutputStream(uri)) {
+
+            pdf.writeTo(os); // ✅ BENAR
+
         } catch (Exception e) {
             e.printStackTrace();
-            pdf.close();
-            Toast.makeText(this, "Gagal menyimpan PDF", Toast.LENGTH_SHORT).show();
             return null;
         } finally {
             pdf.close();
         }
 
-        Toast.makeText(this, "PDF berhasil disimpan di " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-        return file;
+        return uri;
     }
 
-    private File generatePdfKasir2() {
+    private Uri generatePdfKasir2() {
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
         Paint bold = new Paint();
@@ -605,37 +610,46 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         pdf.finishPage(page);
 
-        // ================= SIMPAN PDF =================
-        File folder = new File(getExternalFilesDir("Invoices"), "");
-        if (!folder.exists() && !folder.mkdirs()) {
-            Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
+// ================= SIMPAN PDF (MediaStore) =================
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME,
+                "SuratJalan_" + invoice.getNoInvoice() + ".pdf");
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOCUMENTS + "/Invoice Apps");
+
+        Uri uri = getContentResolver().insert(
+                MediaStore.Files.getContentUri("external"), values);
+
+        if (uri == null) {
+            Toast.makeText(this, "Gagal membuat file PDF", Toast.LENGTH_SHORT).show();
             pdf.close();
             return null;
         }
 
-        File file = new File(folder, "SuratJalan_" + invoice.getNoInvoice() + ".pdf");
-        try (FileOutputStream fos = new FileOutputStream(file)) {
-            pdf.writeTo(fos);
+        try (OutputStream os = getContentResolver().openOutputStream(uri)) {
+            pdf.writeTo(os);
         } catch (Exception e) {
             e.printStackTrace();
-            pdf.close();
             Toast.makeText(this, "Gagal menyimpan PDF", Toast.LENGTH_SHORT).show();
             return null;
         } finally {
             pdf.close();
         }
 
-        Toast.makeText(this, "PDF berhasil disimpan di " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
-        return file;
-    }
+        Toast.makeText(this,
+                "PDF disimpan di Documents / Invoice Apps",
+                Toast.LENGTH_SHORT).show();
 
+        return uri;
+    }
     private float centerTextX(Paint paint, String text, float colStart, float colEnd) {
         float textWidth = paint.measureText(text);
         return colStart + ((colEnd - colStart - textWidth) / 2);
     }
 
 
-    private File generatePdfKasir3() {
+    private Uri generatePdfKasir3() {
         // sementara pakai desain yang sama
         return generatePdfKasir1();
     }
