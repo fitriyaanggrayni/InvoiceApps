@@ -100,25 +100,83 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
 
-            File pdf = generatePdf();
-            if (pdf != null && pdf.exists()) {
-                try {
-                    Uri uri = FileProvider.getUriForFile(
-                            this,
-                            getPackageName() + ".provider",
-                            pdf
-                    );
-                    Intent i = new Intent(Intent.ACTION_VIEW);
-                    i.setDataAndType(uri, "application/pdf");
-                    i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    startActivity(i);
-                } catch (Exception e) {
-                    Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
-                    e.printStackTrace();
-                }
-            }
+            String[] pilihan = {
+                    "Kasir 1",
+                    "Kasir 2",
+                    "Kasir 3"
+            };
+
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Pilih Template PDF")
+                    .setItems(pilihan, (dialog, which) -> {
+                        File pdf = null;
+
+                        switch (which) {
+                            case 0:
+                                pdf = generatePdfKasir1(); // TEMPLATE LAMA
+                                break;
+
+                            case 1:
+                                pdf = generatePdfKasir2();
+                                break;
+
+                            case 2:
+                                pdf = generatePdfKasir3();
+                                break;
+                        }
+
+                        if (pdf == null || !pdf.exists()) {
+                            Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        try {
+                            Uri uri = FileProvider.getUriForFile(
+                                    this,
+                                    getPackageName() + ".provider",
+                                    pdf
+                            );
+
+                            Intent i = new Intent(Intent.ACTION_VIEW);
+                            i.setDataAndType(uri, "application/pdf");
+                            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            startActivity(i);
+
+                        } catch (Exception e) {
+                            Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
+                            e.printStackTrace();
+                        }
+                    })
+                    .setNegativeButton("Batal", null)
+                    .show();
         });
+
     }
+
+    private void openPdf(File pdf) {
+        if (pdf == null || !pdf.exists()) {
+            Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            Uri uri = FileProvider.getUriForFile(
+                    this,
+                    getPackageName() + ".provider",
+                    pdf
+            );
+
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setDataAndType(uri, "application/pdf");
+            i.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            startActivity(i);
+
+        } catch (Exception e) {
+            Toast.makeText(this, "Gagal membuka PDF", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        }
+    }
+
 
     private void reloadInvoice() {
         if (invoiceId != null) {
@@ -269,7 +327,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             );
 
     // =============== PDF GENERATION =================
-    private File generatePdf() {
+    private File generatePdfKasir1() {
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
         Paint bold = new Paint();
@@ -401,6 +459,17 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         Toast.makeText(this, "PDF berhasil disimpan di " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
         return file;
     }
+
+    private File generatePdfKasir2() {
+        // sementara pakai desain yang sama
+        return generatePdfKasir1();
+    }
+
+    private File generatePdfKasir3() {
+        // sementara pakai desain yang sama
+        return generatePdfKasir1();
+    }
+
 
     private void generatePdfHeader(Canvas canvas, int yStart) {
         int y = yStart;
