@@ -461,9 +461,179 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     }
 
     private File generatePdfKasir2() {
-        // sementara pakai desain yang sama
-        return generatePdfKasir1();
+        PdfDocument pdf = new PdfDocument();
+        Paint normal = new Paint();
+        Paint bold = new Paint();
+        Paint line = new Paint();
+
+        normal.setTextSize(11);
+        bold.setTextSize(12);
+        bold.setFakeBoldText(true);
+        line.setStrokeWidth(2);
+
+        PdfDocument.Page page = pdf.startPage(new PdfDocument.PageInfo.Builder(595, 842, 1).create());
+        Canvas canvas = page.getCanvas();
+
+        int y = 40;
+
+        // ================= INFO TOKO (kotak) =================
+        Paint rectPaint = new Paint();
+        rectPaint.setStyle(Paint.Style.STROKE);
+        rectPaint.setStrokeWidth(2);
+        canvas.drawRect(40, y, 300, y + 60, rectPaint);
+
+        bold.setTextSize(12);
+        canvas.drawText(namaToko, 45, y + 20, bold);
+        normal.setTextSize(11);
+        canvas.drawText(alamatToko, 45, y + 35, normal);
+        canvas.drawText("No. HP: " + telpToko, 45, y + 50, normal);
+
+        // Judul kanan atas
+        bold.setTextSize(22);           // lebih besar
+        bold.setFakeBoldText(true);
+        canvas.drawText("SURAT JALAN", 380, y + 32, bold);
+
+        y += 80;
+
+// ================= DATA INVOICE =================
+        bold.setTextSize(11);
+
+// No Nota
+        canvas.drawText("No. Nota", 40, y, bold);
+        canvas.drawText(":", 120, y, bold);
+        canvas.drawText(invoice.getNoInvoice(), 130, y, normal);
+
+        y += 18;
+
+// Tanggal Pengiriman (di bawah No Nota)
+        canvas.drawText("Tgl. Pengiriman", 40, y, bold);
+        canvas.drawText(":", 120, y, bold);
+        canvas.drawText(invoice.getTanggal(), 130, y, normal);
+
+        y += 18;
+
+// Kepada Yth (di bawah tanggal)
+        canvas.drawText("Kepada Yth", 40, y, bold);
+        canvas.drawText(":", 120, y, bold);
+        canvas.drawText(invoice.getNamaCustomer(), 130, y, normal);
+
+        y += 30;
+
+
+        // ================= TABEL BARANG =================
+        // Header
+        int startX = 40;
+        int[] colX = {startX, 70, 250, 330, 380, 440, 510}; // NO, NAMA, HARGA, UNIT, JUMLAH, TOTAL
+
+        // Garis atas tabel
+        canvas.drawLine(startX, y, 555, y, line);
+        y += 15;
+
+        bold.setTextSize(11);
+        canvas.drawText("NO", colX[0], y, bold);
+        canvas.drawText("NAMA BARANG", colX[1], y, bold);
+        canvas.drawText("HARGA", colX[2], y, bold);
+        canvas.drawText("UNIT", colX[3], y, bold);
+        canvas.drawText("JUMLAH", colX[4], y, bold);
+        canvas.drawText("TOTAL", colX[5], y, bold);
+
+        y += 10;
+        canvas.drawLine(startX, y, 555, y, line);
+        y += 15;
+
+        // Isi tabel
+        int no = 1;
+        for (ItemInvoice item : invoice.getItems()) {
+            double totalItem = item.getQty() * item.getHargaSatuan();
+
+            normal.setTextSize(11);
+            canvas.drawText(String.valueOf(no), colX[0], y, normal);
+            canvas.drawText(limitText(item.getNamaBarang(), 30), colX[1], y, normal);
+            canvas.drawText(rupiah(item.getHargaSatuan()), colX[2], y, normal);
+            canvas.drawText("PCS", colX[3], y, normal);
+
+            String qtyText = String.valueOf(item.getQty());
+            float qtyX = centerTextX(normal, qtyText, colX[4], colX[5]);
+            canvas.drawText(qtyText, qtyX, y, normal);
+
+            canvas.drawText(rupiah(totalItem), colX[5], y, normal);
+
+            y += 20;
+            no++;
+        }
+
+        // Garis bawah tabel
+        canvas.drawLine(startX, y, 555, y, line);
+        y += 25;
+
+        // ================= TOTAL =================
+        bold.setTextSize(12);
+        canvas.drawText("Total Keseluruhan", 40, y, bold);
+        canvas.drawText(":", 170, y, bold);
+        canvas.drawText(rupiah(invoice.getTotal()), 180, y, bold);
+        y += 50;
+
+
+// ================= TANDA TANGAN =================
+
+// Garis tanda tangan
+        float penerimaStart = 50, penerimaEnd = 150;
+        float pengirimStart = 220, pengirimEnd = 320;
+        float adminStart = 400, adminEnd = 500;
+
+        canvas.drawLine(penerimaStart, y, penerimaEnd, y, line);
+        canvas.drawLine(pengirimStart, y, pengirimEnd, y, line);
+        canvas.drawLine(adminStart, y, adminEnd, y, line);
+
+// Teks keterangan (center otomatis)
+        normal.setTextSize(11);
+        float textY = y + 15;
+
+        String t1 = "Penerima";
+        String t2 = "Pengirim";
+        String t3 = "Admin";
+
+        float x1 = penerimaStart + ((penerimaEnd - penerimaStart - normal.measureText(t1)) / 2);
+        float x2 = pengirimStart + ((pengirimEnd - pengirimStart - normal.measureText(t2)) / 2);
+        float x3 = adminStart + ((adminEnd - adminStart - normal.measureText(t3)) / 2);
+
+        canvas.drawText(t1, x1, textY, normal);
+        canvas.drawText(t2, x2, textY, normal);
+        canvas.drawText(t3, x3, textY, normal);
+
+        y += 40;
+
+        pdf.finishPage(page);
+
+        // ================= SIMPAN PDF =================
+        File folder = new File(getExternalFilesDir("Invoices"), "");
+        if (!folder.exists() && !folder.mkdirs()) {
+            Toast.makeText(this, "Gagal membuat folder untuk PDF", Toast.LENGTH_SHORT).show();
+            pdf.close();
+            return null;
+        }
+
+        File file = new File(folder, "SuratJalan_" + invoice.getNoInvoice() + ".pdf");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            pdf.writeTo(fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+            pdf.close();
+            Toast.makeText(this, "Gagal menyimpan PDF", Toast.LENGTH_SHORT).show();
+            return null;
+        } finally {
+            pdf.close();
+        }
+
+        Toast.makeText(this, "PDF berhasil disimpan di " + file.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+        return file;
     }
+
+    private float centerTextX(Paint paint, String text, float colStart, float colEnd) {
+        float textWidth = paint.measureText(text);
+        return colStart + ((colEnd - colStart - textWidth) / 2);
+    }
+
 
     private File generatePdfKasir3() {
         // sementara pakai desain yang sama
