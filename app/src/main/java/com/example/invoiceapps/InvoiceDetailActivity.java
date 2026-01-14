@@ -36,7 +36,6 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import com.google.android.material.appbar.MaterialToolbar;
 
 import android.content.ContentValues;
-import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 
@@ -154,6 +153,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
 
     }
+
 
     private void openPdf(File pdf) {
         if (pdf == null || !pdf.exists()) {
@@ -453,7 +453,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         try (java.io.OutputStream os =
                      getContentResolver().openOutputStream(uri)) {
 
-            pdf.writeTo(os); // ✅ BENAR
+            pdf.writeTo(os);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -650,9 +650,183 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
 
     private Uri generatePdfKasir3() {
-        // sementara pakai desain yang sama
-        return generatePdfKasir1();
+        PdfDocument pdf = new PdfDocument();
+
+        Paint normal = new Paint();
+        Paint bold = new Paint();
+        Paint header = new Paint();
+        Paint line = new Paint();
+
+        normal.setTextSize(11);
+        bold.setTextSize(12);
+        bold.setFakeBoldText(true);
+        header.setTextSize(11);
+        header.setFakeBoldText(true);
+        line.setStrokeWidth(2);
+
+        PdfDocument.Page page = pdf.startPage(
+                new PdfDocument.PageInfo.Builder(595, 842, 1).create()
+        );
+        Canvas canvas = page.getCanvas();
+
+        int y = 40;
+
+        // ================= JUDUL =================
+        bold.setTextSize(16);
+        canvas.drawText("INVOICE", 260, y, bold);
+        y += 30;
+
+        // ================= INFO TOKO =================
+        bold.setTextSize(12);
+        canvas.drawText(namaToko, 40, y, bold);
+        canvas.drawText(alamatToko, 40, y + 15, normal);
+        canvas.drawText("Telp : " + telpToko, 40, y + 30, normal);
+
+        y += 60;
+
+        // ================= KEPADA + INFO INVOICE =================
+        bold.setTextSize(11);
+        canvas.drawText("Kepada Yth :", 40, y, bold);
+        canvas.drawText(invoice.getNamaCustomer(), 40, y + 15, normal);
+        canvas.drawText(alamatCustomer, 40, y + 30, normal);
+        canvas.drawText(telpCustomer, 40, y + 45, normal);
+
+        int rightX = 330;
+        canvas.drawText("No Invoice", rightX, y, normal);
+        canvas.drawText(": " + invoice.getNoInvoice(), rightX + 80, y, normal);
+
+        canvas.drawText("Tanggal", rightX, y + 15, normal);
+        canvas.drawText(": " + invoice.getTanggal(), rightX + 80, y + 15, normal);
+
+        canvas.drawText("Payment", rightX, y + 30, normal);
+        canvas.drawText(": " + jenisPembayaran, rightX + 80, y + 30, normal);
+
+        y += 80;
+
+        // ================= TABEL =================
+        int[] col = {40, 80, 280, 360, 450};
+
+        canvas.drawLine(40, y, 555, y, line);
+        y += 18;
+
+        canvas.drawText("No", col[0], y, header);
+        canvas.drawText("Nama Produk", col[1], y, header);
+        canvas.drawText("Qty", col[2], y, header);
+        canvas.drawText("Harga", col[3], y, header);
+        canvas.drawText("Total", col[4], y, header);
+
+        y += 8;
+        canvas.drawLine(40, y, 555, y, line);
+        y += 18;
+
+        int no = 1;
+        for (ItemInvoice item : invoice.getItems()) {
+            double totalItem = item.getQty() * item.getHargaSatuan();
+
+            canvas.drawText(String.valueOf(no++), col[0], y, normal);
+            canvas.drawText(limitText(item.getNamaBarang(), 30), col[1], y, normal);
+            canvas.drawText(String.valueOf(item.getQty()), col[2], y, normal);
+            canvas.drawText(rupiah(item.getHargaSatuan()), col[3], y, normal);
+            canvas.drawText(rupiah(totalItem), col[4], y, normal);
+
+            y += 18;
+        }
+
+        canvas.drawLine(40, y, 555, y, line);
+        y += 25;
+
+        // ================= TERBILANG =================
+        canvas.drawText("Terbilang :", 40, y, bold);
+
+        Paint box = new Paint();
+        box.setStyle(Paint.Style.STROKE);
+        box.setStrokeWidth(2);
+        canvas.drawRect(40, y + 8, 350, y + 45, box);
+
+        canvas.drawText(
+                angkaKeTerbilang((long) invoice.getTotal()),
+                45,
+                y + 30,
+                normal
+        );
+
+
+        // ================= TOTAL =================
+        bold.setTextSize(12);
+        canvas.drawText("Total", 400, y + 30, bold);
+        canvas.drawText(rupiah(invoice.getTotal()), 450, y + 30, bold);
+
+        y += 90;
+
+        // ================= TTD =================
+        canvas.drawText("Diterima oleh,", 80, y, normal);
+        canvas.drawText("Hormat kami,", 380, y, normal);
+
+        y += 60;
+        canvas.drawLine(60, y, 180, y, line);
+        canvas.drawLine(360, y, 500, y, line);
+
+        pdf.finishPage(page);
+
+        // ================= SIMPAN (SAMA SEPERTI KASIR 1) =================
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.MediaColumns.DISPLAY_NAME,
+                "Invoice_" + invoice.getNoInvoice() + "_Kasir3.pdf");
+        values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
+        values.put(MediaStore.MediaColumns.RELATIVE_PATH,
+                Environment.DIRECTORY_DOCUMENTS + "/Invoice Apps");
+
+        Uri uri = getContentResolver().insert(
+                MediaStore.Files.getContentUri("external"), values);
+
+        if (uri == null) return null;
+
+        try (OutputStream os = getContentResolver().openOutputStream(uri)) {
+            pdf.writeTo(os);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            pdf.close();
+        }
+
+        return uri;
     }
+
+
+
+    private String angkaKeTerbilang(long angka) {
+        String[] satuan = {
+                "", "Satu", "Dua", "Tiga", "Empat", "Lima",
+                "Enam", "Tujuh", "Delapan", "Sembilan",
+                "Sepuluh", "Sebelas"
+        };
+
+        if (angka < 12) {
+            return satuan[(int) angka];
+        } else if (angka < 20) {
+            return satuan[(int) (angka - 10)] + " Belas";
+        } else if (angka < 100) {
+            return satuan[(int) (angka / 10)] + " Puluh " +
+                    angkaKeTerbilang(angka % 10);
+        } else if (angka < 200) {
+            return "Seratus " + angkaKeTerbilang(angka - 100);
+        } else if (angka < 1000) {
+            return satuan[(int) (angka / 100)] + " Ratus " +
+                    angkaKeTerbilang(angka % 100);
+        } else if (angka < 2000) {
+            return "Seribu " + angkaKeTerbilang(angka - 1000);
+        } else if (angka < 1000000) {
+            return angkaKeTerbilang(angka / 1000) + " Ribu " +
+                    angkaKeTerbilang(angka % 1000);
+        } else if (angka < 1000000000) {
+            return angkaKeTerbilang(angka / 1000000) + " Juta " +
+                    angkaKeTerbilang(angka % 1000000);
+        } else {
+            return "Angka terlalu besar";
+        }
+    }
+
 
 
     private void generatePdfHeader(Canvas canvas, int yStart) {

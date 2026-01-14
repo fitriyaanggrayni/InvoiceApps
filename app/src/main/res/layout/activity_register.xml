@@ -65,7 +65,8 @@
             android:text="Daftar"
             android:backgroundTint="@color/primary_color"
             android:textAllCaps="false"
-            android:layout_marginTop="20dp"/>
+            android:layout_marginTop="20dp"
+            android:textColor="#FFFFFF"/>
 
         <TextView
             android:id="@+id/textToLogin"
