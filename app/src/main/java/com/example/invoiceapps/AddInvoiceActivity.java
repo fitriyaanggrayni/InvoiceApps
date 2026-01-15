@@ -219,7 +219,45 @@ public class AddInvoiceActivity extends AppCompatActivity {
         if (loadingOverlay == null) return;
 
         loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
+        loadingOverlay.setClickable(show);
+        loadingOverlay.setFocusable(show);
+
         btnSimpan.setEnabled(!show);
+    }
+
+    private Bitmap resizeBitmap(Bitmap original, int maxWidth) {
+        if (original.getWidth() <= maxWidth) return original;
+        float ratio = (float) maxWidth / original.getWidth();
+        int newHeight = (int) (original.getHeight() * ratio);
+        return Bitmap.createScaledBitmap(original, maxWidth, newHeight, true);
+    }
+
+    private String resizeCompressAndEncodeToBase64(Uri imageUri) {
+        try {
+            Bitmap original = BitmapFactory.decodeStream(getContentResolver().openInputStream(imageUri));
+
+            int maxSize = 300;
+            int width = original.getWidth();
+            int height = original.getHeight();
+
+            float scale = Math.min((float) maxSize / width, (float) maxSize / height);
+
+            int scaledWidth = Math.round(scale * width);
+            int scaledHeight = Math.round(scale * height);
+
+            Bitmap resized = Bitmap.createScaledBitmap(original, scaledWidth, scaledHeight, true);
+
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            resized.compress(Bitmap.CompressFormat.JPEG, 70, baos);
+
+            byte[] compressedBytes = baos.toByteArray();
+
+            return Base64.encodeToString(compressedBytes, Base64.DEFAULT);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
     }
 
 
@@ -231,18 +269,19 @@ public class AddInvoiceActivity extends AppCompatActivity {
                 logoUri = data.getData();
                 getContentResolver().takePersistableUriPermission(logoUri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
 
-                Bitmap bitmap = BitmapFactory.decodeStream(getContentResolver().openInputStream(logoUri));
-                imgLogo.setImageBitmap(bitmap);
+                logoBase64 = resizeCompressAndEncodeToBase64(logoUri);
 
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
-                logoBase64 = Base64.encodeToString(baos.toByteArray(), Base64.DEFAULT);
+                // Tampilkan logo
+                byte[] bytes = Base64.decode(logoBase64, Base64.DEFAULT);
+                Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                imgLogo.setImageBitmap(bmp);
 
             } catch (Exception e) {
                 Toast.makeText(this, "Gagal memilih logo: " + e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
     }
+
 
     // ================= ITEM =================
     private void tambahBarang() {
@@ -302,8 +341,24 @@ public class AddInvoiceActivity extends AppCompatActivity {
             disk += t * (i.getDiskon() / 100);
         }
 
-        double pajak = etPajak.getText().toString().isEmpty() ? 0 : Double.parseDouble(etPajak.getText().toString());
-        double kirim = etBiayaPengiriman.getText().toString().isEmpty() ? 0 : Double.parseDouble(etBiayaPengiriman.getText().toString());
+        double pajak = 0;
+        double kirim = 0;
+
+        String pajakStr = etPajak.getText().toString().trim();
+        String kirimStr = etBiayaPengiriman.getText().toString().trim();
+
+        try {
+            if (!pajakStr.isEmpty()) {
+                pajak = Double.parseDouble(pajakStr);
+            }
+        } catch (NumberFormatException ignored) {}
+
+        try {
+            if (!kirimStr.isEmpty()) {
+                kirim = Double.parseDouble(kirimStr);
+            }
+        } catch (NumberFormatException ignored) {}
+
 
         double total = sub - disk + ((sub - disk) * pajak / 100) + kirim;
 
@@ -323,7 +378,11 @@ public class AddInvoiceActivity extends AppCompatActivity {
         showLoading(true);
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user == null) return;
+        if (user == null) {
+            showLoading(false);
+            Toast.makeText(this, "User belum login", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
         Map<String, Object> data = new HashMap<>();
         data.put("logoBase64", logoBase64); // simpan Base64
@@ -333,13 +392,26 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
         data.put("noInvoice", etNoInvoice.getText().toString().trim());
         data.put("namaCustomer", etNama.getText().toString().trim());
-        data.put("tanggal", etTanggal.getText().toString().trim());
+        data.put("tanggalText", etTanggal.getText().toString().trim()); // tampil
+        data.put("tanggal", FieldValue.serverTimestamp());              // sorting
         data.put("metodePembayaran", etPembayaran.getText().toString().trim());
         data.put("alamatCustomer", etAlamat.getText().toString().trim());
         data.put("telpCustomer", etNoTelepon.getText().toString().trim());
 
-        data.put("pajak", etPajak.getText().toString().isEmpty() ? 0 : Double.parseDouble(etPajak.getText().toString()));
-        data.put("biayaPengiriman", etBiayaPengiriman.getText().toString().isEmpty() ? 0 : Double.parseDouble(etBiayaPengiriman.getText().toString()));
+        double pajakVal = 0;
+        double kirimVal = 0;
+
+        try {
+            pajakVal = Double.parseDouble(etPajak.getText().toString().trim());
+        } catch (Exception ignored) {}
+
+        try {
+            kirimVal = Double.parseDouble(etBiayaPengiriman.getText().toString().trim());
+        } catch (Exception ignored) {}
+
+        data.put("pajak", pajakVal);
+        data.put("biayaPengiriman", kirimVal);
+
 
         data.put("namaAdmin", "-");
         data.put("namaPenerima", namaPenerima);
@@ -373,16 +445,16 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         if (isEdit && invoiceId != null) {
-            db.collection("invoices").document(invoiceId)
+            db.collection("invoices")
+                    .document(invoiceId)
                     .set(data, SetOptions.merge())
                     .addOnSuccessListener(v -> {
                         showLoading(false);
                         Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
 
-                        Intent intent = new Intent(this, InvoiceDetailActivity.class);
-                        intent.putExtra("invoiceId", invoiceId);
-                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                        startActivity(intent);
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra("invoiceId", invoiceId);
+                        setResult(RESULT_OK, resultIntent);  // penting, supaya detail tahu update sukses
                         finish();
                     })
                     .addOnFailureListener(e -> {
@@ -390,23 +462,23 @@ public class AddInvoiceActivity extends AppCompatActivity {
                         Toast.makeText(this, "Gagal update: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
 
-
         } else {
             db.collection("invoices").add(data)
                     .addOnSuccessListener(d -> {
                         showLoading(false);
                         Toast.makeText(this, "Invoice berhasil disimpan", Toast.LENGTH_SHORT).show();
 
+                        // Kembali ke MainActivity
                         Intent intent = new Intent(this, MainActivity.class);
                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(intent);
                         finish();
                     })
+
                     .addOnFailureListener(e -> {
                         showLoading(false);
                         Toast.makeText(this, "Gagal simpan: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
-
 
         }
     }
@@ -414,9 +486,16 @@ public class AddInvoiceActivity extends AppCompatActivity {
     // ================= LOAD DATA EDIT =================
     @SuppressWarnings("unchecked")
     private void loadInvoiceForEdit(String invoiceId) {
-        FirebaseFirestore.getInstance().collection("invoices").document(invoiceId).get()
+
+        showLoading(true);
+
+        FirebaseFirestore.getInstance()
+                .collection("invoices")
+                .document(invoiceId)
+                .get()
                 .addOnSuccessListener(doc -> {
                     showLoading(false);
+
                     if (!doc.exists()) {
                         Toast.makeText(this, "Data invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
                         finish();
@@ -425,7 +504,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
                     etNoInvoice.setText(doc.getString("noInvoice"));
                     etNama.setText(doc.getString("namaCustomer"));
-                    etTanggal.setText(doc.getString("tanggal"));
+
+                    etTanggal.setText(doc.getString("tanggalText"));
+
                     etPembayaran.setText(doc.getString("metodePembayaran"));
                     etAlamat.setText(doc.getString("alamatCustomer"));
                     etNoTelepon.setText(doc.getString("telpCustomer"));
@@ -436,40 +517,44 @@ public class AddInvoiceActivity extends AppCompatActivity {
                     Double ongkir = doc.getDouble("biayaPengiriman");
                     etBiayaPengiriman.setText(ongkir != null ? String.valueOf(ongkir) : "0");
 
+                    // Company
                     Object companyObj = doc.get("company");
                     if (companyObj instanceof Map) {
                         Map<String, Object> company = (Map<String, Object>) companyObj;
-                        etNamaUsaha.setText(company.get("namaUsaha") != null ? company.get("namaUsaha").toString() : "");
-                        etAlamatUsaha.setText(company.get("alamat") != null ? company.get("alamat").toString() : "");
-                        etTelpUsaha.setText(company.get("telp") != null ? company.get("telp").toString() : "");
-                        String logo = company.get("logoBase64") != null ? company.get("logoBase64").toString() : "";
+                        etNamaUsaha.setText(String.valueOf(company.get("namaUsaha")));
+                        etAlamatUsaha.setText(String.valueOf(company.get("alamat")));
+                        etTelpUsaha.setText(String.valueOf(company.get("telp")));
+
+                        String logo = String.valueOf(company.get("logoBase64"));
                         if (!logo.isEmpty()) {
                             byte[] bytes = Base64.decode(logo, Base64.DEFAULT);
-                            Bitmap bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                            imgLogo.setImageBitmap(bitmap);
+                            imgLogo.setImageBitmap(
+                                    BitmapFactory.decodeByteArray(bytes, 0, bytes.length)
+                            );
                             logoBase64 = logo;
                         }
                     }
 
-                    // Load items
+                    // Items
                     listInvoice.clear();
                     Object itemsObj = doc.get("items");
                     if (itemsObj instanceof List) {
-                        List<Map<String, Object>> items = (List<Map<String, Object>>) itemsObj;
-                        for (Map<String, Object> m : items) {
-                            String namaBarang = m.get("namaBarang") != null ? m.get("namaBarang").toString() : "";
-                            int qty = m.get("qty") instanceof Number ? ((Number) m.get("qty")).intValue() : 0;
-                            double harga = m.get("hargaSatuan") instanceof Number ? ((Number) m.get("hargaSatuan")).doubleValue() : 0.0;
-                            double diskon = m.get("diskon") instanceof Number ? ((Number) m.get("diskon")).doubleValue() : 0.0;
-                            listInvoice.add(new ItemInvoice(namaBarang, qty, harga, diskon));
+                        for (Map<String, Object> m : (List<Map<String, Object>>) itemsObj) {
+                            listInvoice.add(new ItemInvoice(
+                                    String.valueOf(m.get("namaBarang")),
+                                    ((Number) m.get("qty")).intValue(),
+                                    ((Number) m.get("hargaSatuan")).doubleValue(),
+                                    ((Number) m.get("diskon")).doubleValue()
+                            ));
                         }
                     }
 
                     invoiceAdapter.notifyDataSetChanged();
                     hitungTotal();
-
-                }).addOnFailureListener(e -> {
-                    Toast.makeText(this, "Gagal memuat data invoice: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                })
+                .addOnFailureListener(e -> {
+                    showLoading(false);
+                    Toast.makeText(this, "Gagal memuat data: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     finish();
                 });
     }

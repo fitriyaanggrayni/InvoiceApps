@@ -46,84 +46,43 @@ public class MainActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
 
-        // Tombol tambah invoice
+        // Tambah invoice
         fab.setOnClickListener(v -> {
-            Intent intent = new Intent(MainActivity.this, AddInvoiceActivity.class);
+            Intent intent = new Intent(this, AddInvoiceActivity.class);
             startActivityForResult(intent, REQUEST_ADD_EDIT);
         });
 
-        // Tombol edit invoice dari adapter
-        adapter.setOnItemDeleteListener(position -> {
-            Invoice invoice = invoiceList.get(position);
+        // Delete invoice
+        adapter.setOnItemDeleteListener(this::deleteInvoice);
 
-            if (invoice.getId() == null || invoice.getId().isEmpty()) {
-                Toast.makeText(MainActivity.this, "Invoice ID tidak tersedia", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Intent ke AddInvoiceActivity untuk edit
-            Intent intent = new Intent(MainActivity.this, AddInvoiceActivity.class);
-            intent.putExtra("isEdit", true);
-            intent.putExtra("invoiceId", invoice.getId());
-            startActivityForResult(intent, REQUEST_ADD_EDIT);
-        });
-
-        // Load awal dari server
-        loadInvoicesFromServer();
+        // Load realtime (SATU-SATUNYA)
+        startRealtimeListener();
     }
 
-    private void loadInvoicesFromServer() {
+    // ================= REALTIME LISTENER =================
+    private void startRealtimeListener() {
+
+        if (listener != null) listener.remove();
+
         progressBar.setVisibility(View.VISIBLE);
         recyclerView.setVisibility(View.GONE);
 
-        db.collection("invoices")
-                .get(Source.SERVER)
-                .addOnSuccessListener(snapshots -> {
-                    progressBar.setVisibility(View.GONE);
-                    recyclerView.setVisibility(View.VISIBLE);
-
-                    invoiceList.clear();
-                    if (snapshots != null) {
-                        List<DocumentSnapshot> docs = snapshots.getDocuments();
-                        // Urut DESC berdasarkan createdAt
-                        Collections.sort(docs, (d1, d2) -> {
-                            Date t1 = d1.getDate("createdAt");
-                            Date t2 = d2.getDate("createdAt");
-
-                            if (t1 == null && t2 == null) return 0;
-                            if (t1 == null) return 1;
-                            if (t2 == null) return -1;
-                            return t2.compareTo(t1);
-                        });
-
-                        for (DocumentSnapshot doc : docs) {
-                            invoiceList.add(parseInvoice(doc));
-                        }
-                    }
-
-                    adapter.notifyDataSetChanged();
-
-                    // Mulai realtime listener
-                    startRealtimeListener();
-                })
-                .addOnFailureListener(e -> {
-                    progressBar.setVisibility(View.GONE);
-                    recyclerView.setVisibility(View.VISIBLE);
-                    Toast.makeText(this, "Gagal load invoice: " + e.getMessage(), Toast.LENGTH_LONG).show();
-                });
-    }
-
-    private void startRealtimeListener() {
         listener = db.collection("invoices")
                 .addSnapshotListener((snapshots, e) -> {
+
+                    progressBar.setVisibility(View.GONE);
+                    recyclerView.setVisibility(View.VISIBLE);
+
                     if (e != null || snapshots == null) return;
 
                     invoiceList.clear();
+
                     List<DocumentSnapshot> docs = snapshots.getDocuments();
-                    Collections.sort(docs, (d1, d2) -> {
+
+                    // Urutkan berdasarkan tanggal terbaru
+                    docs.sort((d1, d2) -> {
                         Date t1 = d1.getDate("createdAt");
                         Date t2 = d2.getDate("createdAt");
-
                         if (t1 == null && t2 == null) return 0;
                         if (t1 == null) return 1;
                         if (t2 == null) return -1;
@@ -138,11 +97,39 @@ public class MainActivity extends AppCompatActivity {
                 });
     }
 
+    // ================= DELETE INVOICE =================
+    private void deleteInvoice(int position) {
+
+        if (position < 0 || position >= invoiceList.size()) return;
+
+        Invoice invoice = invoiceList.get(position);
+
+        if (invoice.getId() == null || invoice.getId().isEmpty()) {
+            Toast.makeText(this, "Invoice ID tidak valid", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        FirebaseFirestore.getInstance()
+                .collection("invoices")
+                .document(invoice.getId())
+                .delete()
+                .addOnSuccessListener(v ->
+                        Toast.makeText(this, "Invoice berhasil dihapus", Toast.LENGTH_SHORT).show()
+                )
+                .addOnFailureListener(e ->
+                        Toast.makeText(this, "Gagal hapus invoice", Toast.LENGTH_SHORT).show()
+                );
+    }
+
+    // ================= PARSE INVOICE =================
     private Invoice parseInvoice(DocumentSnapshot doc) {
+
         double total = doc.getDouble("total") != null ? doc.getDouble("total") : 0;
+
         Date createdAt = doc.getDate("createdAt");
-        String tanggal = createdAt != null ?
-                new SimpleDateFormat("dd/MM/yyyy").format(createdAt) : "";
+        String tanggal = createdAt != null
+                ? new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()).format(createdAt)
+                : "";
 
         Invoice invoice = new Invoice(
                 doc.getString("noInvoice"),
@@ -154,29 +141,42 @@ public class MainActivity extends AppCompatActivity {
         invoice.setId(doc.getId());
 
         Object itemsObj = doc.get("items");
-        if (itemsObj instanceof List) {
-            List<Map<String, Object>> items = (List<Map<String, Object>>) itemsObj;
-            for (Map<String, Object> map : items) {
-                String namaBarang = map.get("namaBarang") != null ? map.get("namaBarang").toString() : "";
-                int qty = map.get("qty") instanceof Number ? ((Number) map.get("qty")).intValue() : 0;
-                double hargaSatuan = map.get("hargaSatuan") instanceof Number ? ((Number) map.get("hargaSatuan")).doubleValue() : 0;
-                double diskon = map.get("diskon") instanceof Number ? ((Number) map.get("diskon")).doubleValue() : 0;
 
-                invoice.addItem(new ItemInvoice(namaBarang, qty, hargaSatuan, diskon));
+        if (itemsObj instanceof List<?>) {
+            List<?> rawList = (List<?>) itemsObj;
+
+            for (Object obj : rawList) {
+
+                if (!(obj instanceof Map)) continue;
+
+                Map<?, ?> map = (Map<?, ?>) obj;
+
+                String namaBarang = map.get("namaBarang") != null
+                        ? map.get("namaBarang").toString()
+                        : "";
+
+                int qty = map.get("qty") instanceof Number
+                        ? ((Number) map.get("qty")).intValue()
+                        : 0;
+
+                double hargaSatuan = map.get("hargaSatuan") instanceof Number
+                        ? ((Number) map.get("hargaSatuan")).doubleValue()
+                        : 0;
+
+                double diskon = map.get("diskon") instanceof Number
+                        ? ((Number) map.get("diskon")).doubleValue()
+                        : 0;
+
+                invoice.addItem(new ItemInvoice(
+                        namaBarang,
+                        qty,
+                        hargaSatuan,
+                        diskon
+                ));
             }
         }
 
         return invoice;
-    }
-
-    // ================= REFRESH SETELAH EDIT =================
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == REQUEST_ADD_EDIT && resultCode == RESULT_OK) {
-            // refresh list
-            loadInvoicesFromServer();
-        }
     }
 
     @Override

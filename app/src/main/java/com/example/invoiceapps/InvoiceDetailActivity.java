@@ -101,8 +101,9 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             Intent i = new Intent(this, AddInvoiceActivity.class);
             i.putExtra("isEdit", true);
             i.putExtra("invoiceId", invoiceId);
-            editLauncher.launch(i);
+            editLauncher.launch(i);  // pakai launcher ini
         });
+
 
         btnDownloadPdf.setOnClickListener(v -> {
             if (invoice == null) return;
@@ -217,7 +218,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                     invoice = new Invoice(
                             doc.getString("noInvoice"),
                             doc.getString("namaCustomer"),
-                            doc.getString("tanggal"),
+                            doc.getString("tanggalText"),
+
                             0
                     );
 
@@ -254,18 +256,35 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                         logoBitmap = null;
                     }
 
+                    Object itemsObj = doc.get("items");
                     itemList.clear();
-                    List<Map<String, Object>> items = (List<Map<String, Object>>) doc.get("items");
-                    if (items != null) {
-                        for (Map<String, Object> m : items) {
-                            String namaBarang = m.get("namaBarang") != null ? m.get("namaBarang").toString() : "";
-                            int qty = m.get("qty") instanceof Number ? ((Number) m.get("qty")).intValue() : 0;
-                            double hargaSatuan = m.get("hargaSatuan") instanceof Number ? ((Number) m.get("hargaSatuan")).doubleValue() : 0;
-                            double diskon = m.get("diskon") instanceof Number ? ((Number) m.get("diskon")).doubleValue() : 0;
 
-                            itemList.add(new ItemInvoice(namaBarang, qty, hargaSatuan, diskon));
+                    if (itemsObj instanceof List) {
+                        for (Object o : (List<?>) itemsObj) {
+                            if (o instanceof Map) {
+                                Map<String, Object> m = (Map<String, Object>) o;
+
+                                String namaBarang = m.get("namaBarang") != null
+                                        ? m.get("namaBarang").toString()
+                                        : "";
+
+                                int qty = m.get("qty") instanceof Number
+                                        ? ((Number) m.get("qty")).intValue()
+                                        : 0;
+
+                                double hargaSatuan = m.get("hargaSatuan") instanceof Number
+                                        ? ((Number) m.get("hargaSatuan")).doubleValue()
+                                        : 0;
+
+                                double diskon = m.get("diskon") instanceof Number
+                                        ? ((Number) m.get("diskon")).doubleValue()
+                                        : 0;
+
+                                itemList.add(new ItemInvoice(namaBarang, qty, hargaSatuan, diskon));
+                            }
                         }
                     }
+
 
                     invoice.setItems(itemList);
                     hitungInvoice();
@@ -330,6 +349,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
     // =============== PDF GENERATION =================
     private Uri generatePdfKasir1() {
+        if (invoice == null || invoice.getItems() == null) {
+            Toast.makeText(this, "Data invoice belum siap", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
         Paint bold = new Paint();
@@ -466,6 +490,12 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     }
 
     private Uri generatePdfKasir2() {
+        if (invoice == null || invoice.getItems() == null) {
+            Toast.makeText(this, "Data invoice belum siap", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+
+
         PdfDocument pdf = new PdfDocument();
         Paint normal = new Paint();
         Paint bold = new Paint();
@@ -650,6 +680,11 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
 
     private Uri generatePdfKasir3() {
+        if (invoice == null || invoice.getItems() == null) {
+            Toast.makeText(this, "Data invoice belum siap", Toast.LENGTH_SHORT).show();
+            return null;
+        }
+
         PdfDocument pdf = new PdfDocument();
 
         Paint normal = new Paint();
@@ -738,8 +773,10 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
 // ================= TERBILANG =================
 
-// Teks terbilang TANPA "Rupiah" dulu
         String terbilangText = angkaKeTerbilang((long) invoice.getTotal());
+        if (terbilangText == null || terbilangText.trim().isEmpty()) {
+            terbilangText = "-";
+        }
 
         int maxCharPerLine = 25;
         int lineHeight = 15;
@@ -758,14 +795,14 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             }
         }
 
-// Tambahkan baris terakhir
         if (currentLine.length() > 0) {
             lines.add(currentLine.toString());
         }
 
 // Tambahkan " Rupiah" ke BARIS TERAKHIR
         int lastIndex = lines.size() - 1;
-        lines.set(lastIndex, lines.get(lastIndex) + " Rupiah");
+        String lastLine = lines.get(lastIndex).trim();
+        lines.set(lastIndex, lastLine + " Rupiah");
 
 // Posisi kotak
         int boxLeft = 40;
@@ -798,6 +835,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
 // Update y setelah kotak
         y = boxBottom + 10;
+
 
 
 // ================= TOTAL =================
