@@ -737,40 +737,68 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         y += 10; // jarak sebelum Total
 
 // ================= TERBILANG =================
+
+// Teks terbilang TANPA "Rupiah" dulu
         String terbilangText = angkaKeTerbilang((long) invoice.getTotal());
-        int maxCharPerLine = 25; // maksimal karakter per baris kotak
+
+        int maxCharPerLine = 25;
         int lineHeight = 15;
 
-// Split teks terbilang menjadi beberapa baris
+// Pecah teks berdasarkan KATA (spasi)
         List<String> lines = new ArrayList<>();
-        for (int start = 0; start < terbilangText.length(); start += maxCharPerLine) {
-            int end = Math.min(start + maxCharPerLine, terbilangText.length());
-            lines.add(terbilangText.substring(start, end));
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : terbilangText.split(" ")) {
+            if (currentLine.length() + word.length() + 1 <= maxCharPerLine) {
+                if (currentLine.length() > 0) currentLine.append(" ");
+                currentLine.append(word);
+            } else {
+                lines.add(currentLine.toString());
+                currentLine = new StringBuilder(word);
+            }
         }
 
-// Tentukan posisi kotak terbilang
-        int boxLeft = 40;
-        int boxRight = 350;
-        int boxTop = y + 15; // beri jarak dari garis bawah tabel
-        int boxBottom = boxTop + lines.size() * lineHeight + 10;
+// Tambahkan baris terakhir
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
 
-// Label "Terbilang:" di atas kotak (di luar kotak)
+// Tambahkan " Rupiah" ke BARIS TERAKHIR
+        int lastIndex = lines.size() - 1;
+        lines.set(lastIndex, lines.get(lastIndex) + " Rupiah");
+
+// Posisi kotak
+        int boxLeft = 40;
+        int boxTop = y + 18;
+        int boxRight = 350;
+        int boxBottom = boxTop + (lines.size() * lineHeight) + 10;
+
+// Label "Terbilang:" (di luar kotak)
         bold.setTextSize(11);
         canvas.drawText("Terbilang:", boxLeft, y + 12, bold);
 
-// Gambar kotak terbilang
+// Gambar kotak
         Paint box = new Paint();
         box.setStyle(Paint.Style.STROKE);
         box.setStrokeWidth(2);
         canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, box);
 
-// Tulis isi kotak, mulai dari dalam kotak
-        normal.setTextSize(11);
-        int textY = boxTop + 15; // beri jarak dari atas kotak
+// Paint teks isi kotak (italic + bold)
+        Paint italicBold = new Paint();
+        italicBold.setTextSize(11);
+        italicBold.setFakeBoldText(true);
+        italicBold.setTextSkewX(-0.25f); // italic
+
+// Tulis isi kotak
+        int textY = boxTop + 15;
         for (String lineText : lines) {
-            canvas.drawText(lineText, boxLeft + 5, textY, normal);
+            canvas.drawText(lineText, boxLeft + 5, textY, italicBold);
             textY += lineHeight;
         }
+
+// Update y setelah kotak
+        y = boxBottom + 10;
+
 
 // ================= TOTAL =================
 // Total di sebelah kanan kotak, sejajar dengan kotak tapi lebih dinaikkan

@@ -80,6 +80,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
     // ====== EDIT MODE ======
     private boolean isEdit = false;
     private String invoiceId;
+    private View loadingOverlay;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -157,6 +160,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
         etBiayaPengiriman = findViewById(R.id.etBiayaPengiriman);
 
         btnSimpan = findViewById(R.id.btnSimpan);
+
+        loadingOverlay = findViewById(R.id.loadingOverlay);
+
     }
 
     // ================= SETUP =================
@@ -209,6 +215,13 @@ public class AddInvoiceActivity extends AppCompatActivity {
         i.addCategory(Intent.CATEGORY_OPENABLE);
         startActivityForResult(i, PICK_LOGO);
     }
+    private void showLoading(boolean show) {
+        if (loadingOverlay == null) return;
+
+        loadingOverlay.setVisibility(show ? View.VISIBLE : View.GONE);
+        btnSimpan.setEnabled(!show);
+    }
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -307,6 +320,8 @@ public class AddInvoiceActivity extends AppCompatActivity {
             return;
         }
 
+        showLoading(true);
+
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user == null) return;
 
@@ -358,20 +373,41 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
         FirebaseFirestore db = FirebaseFirestore.getInstance();
         if (isEdit && invoiceId != null) {
-            db.collection("invoices").document(invoiceId).set(data, SetOptions.merge())
+            db.collection("invoices").document(invoiceId)
+                    .set(data, SetOptions.merge())
                     .addOnSuccessListener(v -> {
+                        showLoading(false);
                         Toast.makeText(this, "Invoice berhasil diperbarui", Toast.LENGTH_SHORT).show();
-                        Intent result = new Intent();
-                        result.putExtra("updated", true);
-                        setResult(RESULT_OK, result);
+
+                        Intent intent = new Intent(this, InvoiceDetailActivity.class);
+                        intent.putExtra("invoiceId", invoiceId);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                        startActivity(intent);
                         finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        showLoading(false);
+                        Toast.makeText(this, "Gagal update: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
+
+
         } else {
             db.collection("invoices").add(data)
                     .addOnSuccessListener(d -> {
+                        showLoading(false);
                         Toast.makeText(this, "Invoice berhasil disimpan", Toast.LENGTH_SHORT).show();
+
+                        Intent intent = new Intent(this, MainActivity.class);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
                         finish();
+                    })
+                    .addOnFailureListener(e -> {
+                        showLoading(false);
+                        Toast.makeText(this, "Gagal simpan: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
+
+
         }
     }
 
@@ -380,6 +416,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
     private void loadInvoiceForEdit(String invoiceId) {
         FirebaseFirestore.getInstance().collection("invoices").document(invoiceId).get()
                 .addOnSuccessListener(doc -> {
+                    showLoading(false);
                     if (!doc.exists()) {
                         Toast.makeText(this, "Data invoice tidak ditemukan", Toast.LENGTH_SHORT).show();
                         finish();
