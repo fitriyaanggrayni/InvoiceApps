@@ -40,6 +40,8 @@ import java.util.Map;
 
 import android.util.Base64;
 import android.widget.AutoCompleteTextView;
+import com.google.android.material.textfield.MaterialAutoCompleteTextView;
+
 
 
 public class AddInvoiceActivity extends AppCompatActivity {
@@ -57,7 +59,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     // ====== INVOICE ======
     private TextInputEditText etNoInvoice, etTanggal;
-    private AutoCompleteTextView etPembayaran;
+    private MaterialAutoCompleteTextView etPembayaran;
 
     // ====== ITEM ======
     private TextInputEditText etNamaBarang, etQty, etHargaSatuan, etDiskon;
@@ -159,6 +161,7 @@ public class AddInvoiceActivity extends AppCompatActivity {
         etPajak = findViewById(R.id.etPajak);
         etBiayaPengiriman = findViewById(R.id.etBiayaPengiriman);
 
+
         btnSimpan = findViewById(R.id.btnSimpan);
 
         loadingOverlay = findViewById(R.id.loadingOverlay);
@@ -175,7 +178,10 @@ public class AddInvoiceActivity extends AppCompatActivity {
 
     private void setupMetodePembayaran() {
         String[] metode = {"Tunai", "Transfer Bank", "E-Wallet", "Kartu Debit", "Kartu Kredit", "COD"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line, metode);
+        ArrayAdapter<String> adapter =
+                new ArrayAdapter<>(this,
+                        android.R.layout.simple_dropdown_item_1line,
+                        metode);
         etPembayaran.setAdapter(adapter);
     }
 

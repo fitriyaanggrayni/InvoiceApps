@@ -4,24 +4,22 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="#F5F7FA">
 
     <!-- Toolbar -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_color"
-        android:titleTextColor="@android:color/white"
+        android:background="#1E88E5"
         app:title="Detail Invoice"
         app:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/ic_arrow_back"
         android:elevation="4dp"/>
 
-    <!-- Header Info & Total -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="16dp">
 
@@ -49,6 +47,7 @@
                     android:textColor="#1565C0"
                     android:layout_marginBottom="16dp"/>
 
+                <!-- No Invoice -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -59,20 +58,20 @@
                         android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:text="No Invoice"
-                        android:textColor="#424242"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp"
+                        android:textColor="#546E7A"/>
 
                     <TextView
                         android:id="@+id/tvNoInvoice"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text=""
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#0D47A1"/>
+                        android:textColor="#263238"/>
                 </LinearLayout>
 
+                <!-- Nama Customer -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -83,20 +82,20 @@
                         android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:text="Nama Customer"
-                        android:textColor="#424242"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp"
+                        android:textColor="#546E7A"/>
 
                     <TextView
                         android:id="@+id/tvNamaCustomer"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text=""
-                        android:textColor="#0D47A1"
                         android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textStyle="bold"
+                        android:textColor="#263238"/>
                 </LinearLayout>
 
+                <!-- Tanggal -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -107,25 +106,25 @@
                         android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:text="Tanggal"
-                        android:textColor="#424242"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp"
+                        android:textColor="#546E7A"/>
 
                     <TextView
                         android:id="@+id/tvTanggal"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text=""
-                        android:textColor="#0D47A1"
-                        android:textSize="14sp"/>
+                        android:textSize="14sp"
+                        android:textColor="#263238"/>
                 </LinearLayout>
 
                 <View
                     android:layout_width="match_parent"
-                    android:layout_height="2dp"
-                    android:background="#1565C0"
-                    android:layout_marginVertical="8dp"/>
+                    android:layout_height="1dp"
+                    android:background="#BBDEFB"
+                    android:layout_marginBottom="12dp"/>
 
+                <!-- TOTAL -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -140,7 +139,7 @@
                         android:text="TOTAL"
                         android:textSize="18sp"
                         android:textStyle="bold"
-                        android:textColor="#0D47A1"/>
+                        android:textColor="#1565C0"/>
 
                     <TextView
                         android:id="@+id/tvTotal"
@@ -149,22 +148,20 @@
                         android:text="Rp 0"
                         android:textSize="20sp"
                         android:textStyle="bold"
-                        android:textColor="#0D47A1"/>
+                        android:textColor="#1565C0"/>
                 </LinearLayout>
 
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- RecyclerView Daftar Barang -->
+        <!-- RecyclerView -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvDetailBarang"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clipToPadding="false"
-            android:paddingBottom="16dp"/>
+            android:layout_weight="1"/>
 
-        <!-- Action Buttons -->
+        <!-- Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -174,25 +171,23 @@
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnEdit"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="56dp"
                 android:text="Edit Invoice"
-                android:textSize="16sp"
                 android:textStyle="bold"
-                android:backgroundTint="#1976D2"
-                android:textColor="#FFFFFF"
-                app:cornerRadius="8dp"
+                android:backgroundTint="#1565C0"
+                android:textColor="@android:color/white"
+                app:cornerRadius="10dp"
                 android:layout_marginBottom="12dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnDownloadPdf"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="56dp"
                 android:text="Download PDF"
-                android:textSize="16sp"
                 android:textStyle="bold"
-                android:backgroundTint="#1976D2"
-                android:textColor="#FFFFFF"
-                app:cornerRadius="8dp"/>
+                android:backgroundTint="#1565C0"
+                android:textColor="@android:color/white"
+                app:cornerRadius="10dp"/>
 
         </LinearLayout>
 

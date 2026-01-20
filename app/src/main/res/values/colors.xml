@@ -1,85 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- ✅ Primary Colors (Material Theme) -->
-    <color name="primary">#6750A4</color>
+    <!-- 🔵 PRIMARY (Logo Blue) -->
+    <color name="primary">#1E88E5</color>
+    <color name="primary_dark">#1565C0</color>
     <color name="on_primary">#FFFFFF</color>
-    <color name="primary_container">#EADDFF</color>
-    <color name="on_primary_container">#21005D</color>
+    <color name="primary_container">#E3F2FD</color>
+    <color name="on_primary_container">#0D47A1</color>
 
-    <!-- ✅ Secondary Colors -->
-    <color name="secondary">#625B71</color>
+    <!-- ⚫ SECONDARY (Gray Business) -->
+    <color name="secondary">#607D8B</color>
+    <color name="secondary_dark">#455A64</color>
     <color name="on_secondary">#FFFFFF</color>
-    <color name="secondary_container">#E8DEF8</color>
-    <color name="on_secondary_container">#1D192B</color>
+    <color name="secondary_container">#ECEFF1</color>
+    <color name="on_secondary_container">#263238</color>
 
-    <!-- ✅ Tertiary Colors -->
-    <color name="tertiary">#7D5260</color>
+    <!-- 🟢 TERTIARY -->
+    <color name="tertiary">#4CAF50</color>
     <color name="on_tertiary">#FFFFFF</color>
-    <color name="tertiary_container">#FFD8E4</color>
-    <color name="on_tertiary_container">#31111D</color>
 
-    <!-- ✅ Error Colors -->
-    <color name="error">#BA1A1A</color>
+    <!-- 🔴 ERROR -->
+    <color name="error">#D32F2F</color>
     <color name="on_error">#FFFFFF</color>
-    <color name="error_container">#FFDAD6</color>
-    <color name="on_error_container">#410002</color>
 
-    <!-- ✅ Surface Colors -->
-    <color name="surface">#FEF7FF</color>
-    <color name="on_surface">#1C1B1F</color>
-    <color name="surface_variant">#E7E0EC</color>
-    <color name="on_surface_variant">#49454F</color>
-    <color name="surface_container_low">#F7F2FA</color>
-    <color name="surface_container">#F3EDF7</color>
-    <color name="surface_container_high">#ECE6F0</color>
+    <!-- 🧱 SURFACE -->
+    <color name="background">#FAFAFA</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="on_surface">#212121</color>
+    <color name="surface_variant">#ECEFF1</color>
+    <color name="on_surface_variant">#455A64</color>
 
-    <!-- ✅ App Branding Colors -->
-    <color name="primary_color">#2196F3</color>
-    <color name="primary_dark">#5a6fd8</color>
-    <color name="accent_color">#4CAF50</color>
+    <!-- 📝 TEXT -->
+    <color name="text_primary">#263238</color>
+    <color name="text_secondary">#607D8B</color>
+    <color name="text_hint">#90A4AE</color>
 
-    <!-- ✅ Theme Colors -->
-    <color name="primary_green">#4CAF50</color>
-    <color name="primary_green_dark">#388E3C</color>
-    <color name="primary_green_light">#C8E6C9</color>
+    <!-- 🧩 UI -->
+    <color name="divider">#E0E0E0</color>
+    <color name="outline">#B0BEC5</color>
+    <color name="ripple">#1F1E88E5</color>
 
-    <!-- ✅ Background & Card Colors -->
-    <color name="background_light">#F9F9F9</color>
-    <color name="card_background">#FFFFFF</color>
-    <color name="image_placeholder">#F5F5F5</color>
-    <color name="divider_color">#E0E0E0</color>
-    <color name="background_gradient_start">#E3F2FD</color>
-    <color name="background_gradient_end">#F8F9FA</color>
-    <color name="background_start">#667eea</color>
-    <color name="background_end">#764ba2</color>
-
-    <!-- ✅ Text Colors -->
-    <color name="text_primary">#333333</color>
-    <color name="text_secondary">#666666</color>
-    <color name="text_hint">#BDC3C7</color>
-    <color name="text_white">#FFFFFF</color>
-    <color name="text_white_70">#B3FFFFFF</color>
-
-    <!-- ✅ Status Colors -->
-    <color name="status_online">#E8F5E8</color>
-    <color name="status_online_text">#2E7D32</color>
-
-    <!-- ✅ Icon Background Colors -->
-    <color name="icon_location">#E3F2FD</color>
-    <color name="icon_camera">#FFF3E0</color>
-    <color name="icon_history">#F3E5F5</color>
-
-    <!-- ✅ Other Utility Colors -->
-    <color name="ripple_color">#1F000000</color>
-    <color name="button_ripple">#33FFFFFF</color>
-    <color name="outline">#79747E</color>
-    <color name="outline_variant">#CAC4D0</color>
-
-    <!-- ✅ Base Colors -->
+    <!-- BASE -->
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
 
-    <color name="hint_color">#212121</color>
+    <!-- 🟢 TERTIARY CONTAINER (Success / Summary Card) -->
+    <color name="tertiary_container">#E8F5E9</color>
+    <color name="on_tertiary_container">#1B5E20</color>
+
 
 </resources>

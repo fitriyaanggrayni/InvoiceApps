@@ -4,17 +4,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F5F5F5">
+    android:background="@color/background"
+    >
 
     <!-- AppBar dengan Header -->
     <com.google.android.material.appbar.MaterialToolbar
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/primary_color"
-        android:titleTextColor="@android:color/white"
+        android:background="@color/primary"
+        app:titleTextColor="@color/on_primary"
         app:title="Tambah Invoice"
-        app:titleTextColor="@android:color/white"
         app:navigationIcon="@drawable/ic_arrow_back"
         android:elevation="4dp"/>
 
@@ -39,7 +39,7 @@
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#FFF3E0">
+                app:cardBackgroundColor="@color/secondary_container">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -53,7 +53,7 @@
                         android:text="📋 Informasi Usaha"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#E65100"
+                        android:textColor="@color/on_secondary_container"
                         android:layout_marginBottom="16dp"/>
 
                     <!-- Logo Container -->
@@ -84,15 +84,16 @@
                         android:text="Pilih Logo"
                         android:layout_gravity="center"
                         android:layout_marginBottom="16dp"
-                        android:backgroundTint="#E65100"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                        android:backgroundTint="@color/primary"
+                        android:textColor="@color/on_primary"
+                        app:cornerRadius="20dp" />
 
                     <TextView
                         android:id="@+id/textView"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Nama Usaha"
-                        android:textColor="#E65100"/>
+                        android:textColor="@color/text_secondary" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -100,8 +101,8 @@
                         android:layout_marginBottom="12dp"
                         android:hint="Nama Usaha"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#E65100"
-                        app:boxStrokeColor="#E65100">
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/primary">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNamaUsaha"
@@ -117,7 +118,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Alamat Usaha"
-                        android:textColor="#E65100"/>
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -125,8 +128,8 @@
                         android:layout_marginBottom="12dp"
                         android:hint="Alamat Usaha"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#E65100"
-                        app:boxStrokeColor="#E65100">
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etAlamatUsaha"
@@ -136,33 +139,37 @@
                             android:minLines="2"
                             android:maxLines="3"
                             android:gravity="top"
-                            android:textColor="#000000"
-                            android:textColorHint="#BF360C"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
+
 
                     <TextView
                         android:id="@+id/textView4"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="No Telepon"
-                        android:textColor="#E65100"/>
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="No Telepon Usaha"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#E65100"
-                        app:boxStrokeColor="#E65100">
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etTelpUsaha"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="phone"
-                            android:textColor="#000000"
-                            android:textColorHint="#BF360C"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
+
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -174,7 +181,7 @@
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#F3E5F5">
+                app:cardBackgroundColor="@color/secondary_container">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -182,21 +189,24 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <!-- Title -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="👤 Informasi Pelanggan"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#6A1B9A"
-                        android:layout_marginBottom="16dp"/>
+                        android:textColor="@color/on_secondary_container"
+                        android:layout_marginBottom="16dp" />
 
+                    <!-- Nama Pelanggan -->
                     <TextView
-                        android:id="@+id/textView5"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Nama Pelanggan"
-                        android:textColor="#6A1B9A"/>
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -204,24 +214,27 @@
                         android:layout_marginBottom="12dp"
                         android:hint="Nama Pelanggan"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#6A1B9A"
-                        app:boxStrokeColor="#6A1B9A">
+                        app:boxStrokeColor="@color/outline"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNama"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="textPersonName"
-                            android:textColor="#000000"
-                            android:textColorHint="#4A148C"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- No Telepon -->
                     <TextView
-                        android:id="@+id/textView7"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="No Telepon"
-                        android:textColor="#6A1B9A"/>
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -229,32 +242,36 @@
                         android:layout_marginBottom="12dp"
                         android:hint="No Telepon Pelanggan"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#6A1B9A"
-                        app:boxStrokeColor="#6A1B9A">
+                        app:boxStrokeColor="@color/outline"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNoTelepon"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="phone"
-                            android:textColor="#000000"
-                            android:textColorHint="#4A148C"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Alamat -->
                     <TextView
-                        android:id="@+id/textView8"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Alamat"
-                        android:textColor="#6A1B9A"/>
+                        android:textColor="@color/text_secondary"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Alamat Pelanggan"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#6A1B9A"
-                        app:boxStrokeColor="#6A1B9A">
+                        app:boxStrokeColor="@color/outline"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etAlamat"
@@ -264,21 +281,22 @@
                             android:minLines="2"
                             android:maxLines="3"
                             android:gravity="top"
-                            android:textColor="#000000"
-                            android:textColorHint="#4A148C"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Informasi Invoice -->
+
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#FCE4EC">
+                app:cardBackgroundColor="@color/secondary_container"
+                app:cardForegroundColor="@android:color/transparent">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -286,21 +304,24 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
+                    <!-- Title -->
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="🧾 Informasi Invoice"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#C2185B"
-                        android:layout_marginBottom="16dp"/>
+                        android:textColor="@color/on_secondary_container"
+                        android:layout_marginBottom="16dp" />
 
+                    <!-- No Invoice -->
                     <TextView
-                        android:id="@+id/textView9"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="No Invoice"
-                        android:textColor="#C2185B"/>
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -309,24 +330,27 @@
                         android:hint="No Invoice"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         app:prefixText="INV-"
-                        app:hintTextColor="#C2185B"
-                        app:boxStrokeColor="#C2185B">
+                        app:boxStrokeColor="@color/outline"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNoInvoice"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:inputType="text"
-                            android:textColor="#000000"
-                            android:textColorHint="#880E4F"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Tanggal -->
                     <TextView
-                        android:id="@+id/textView10"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Tanggal"
-                        android:textColor="#C2185B"/>
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
@@ -334,48 +358,54 @@
                         android:layout_marginBottom="12dp"
                         android:hint="Tanggal"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#C2185B"
-                        app:boxStrokeColor="#C2185B">
+                        app:boxStrokeColor="@color/outline"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etTanggal"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="none"
                             android:focusable="false"
                             android:clickable="true"
-                            android:textColor="#000000"
-                            android:textColorHint="#880E4F"/>
+                            android:inputType="none"
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint" />
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Metode Pembayaran -->
                     <TextView
-                        android:id="@+id/textView11"
-                        android:layout_width="wrap_content"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Pembayaran"
-                        android:textColor="#C2185B"/>
+                        android:text="Metode Pembayaran"
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="4dp" />
 
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:hint="Metode Pembayaran"
+                        android:importantForAccessibility="yes"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-                        app:hintTextColor="#C2185B"
-                        app:boxStrokeColor="#C2185B">
+                        app:boxStrokeColor="@color/outline"
+                        app:boxStrokeWidthFocused="2dp"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.MaterialAutoCompleteTextView
                             android:id="@+id/etPembayaran"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="none"
-                            android:textColor="#000000"
-                            android:textColorHint="#880E4F"/>
-
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint"
+                            android:contentDescription="Metode Pembayaran" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
 
             <!-- Detail Barang -->
             <com.google.android.material.card.MaterialCardView
@@ -384,7 +414,8 @@
                 android:layout_marginBottom="12dp"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#E3F2FD">
+                app:cardBackgroundColor="@color/secondary_container"
+                app:cardForegroundColor="@android:color/transparent">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -398,33 +429,34 @@
                         android:text="🛒 Detail Barang"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#1565C0"
+                        android:textColor="@color/on_secondary_container"
                         android:layout_marginBottom="16dp"/>
 
                     <TextView
-                        android:id="@+id/textView12"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Nama Barang"
-                        android:textColor="#1565C0"/>
+                        android:textSize="14sp"
+                        android:textColor="@color/text_secondary"
+                        android:layout_marginBottom="4dp"/>
 
                     <com.google.android.material.textfield.TextInputLayout
+                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginBottom="12dp"
                         android:hint="Nama Barang"
-                        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:hintTextColor="#1565C0"
-                        app:boxStrokeColor="#1565C0">
+                        app:boxStrokeColor="@color/outline"
+                        app:hintTextColor="@color/text_hint">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etNamaBarang"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:inputType="text"
-                            android:textColor="#000000"
-                            android:textColorHint="#0D47A1"/>
+                            android:textColor="@color/text_primary"
+                            android:textColorHint="@color/text_hint"/>
                     </com.google.android.material.textfield.TextInputLayout>
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -436,14 +468,17 @@
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Jumlah"
-                            android:textColor="#0D47A1"/>
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:text="Harga"
-                            android:textColor="#0D47A1"/>
+                            android:textSize="14sp"
+                            android:textColor="@color/text_secondary"/>
+
                     </LinearLayout>
 
 
@@ -462,8 +497,8 @@
                             android:layout_marginEnd="8dp"
                             android:hint="Jumlah"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                            app:hintTextColor="#1565C0"
-                            app:boxStrokeColor="#1565C0">
+                            app:boxStrokeColor="@color/primary"
+                            app:hintTextColor="@color/primary">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etQty"
@@ -481,8 +516,8 @@
                             android:hint="Harga Satuan"
                             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                             app:prefixText="Rp "
-                            app:hintTextColor="#1565C0"
-                            app:boxStrokeColor="#1565C0">
+                            app:boxStrokeColor="@color/primary"
+                            app:hintTextColor="@color/primary">
 
                             <com.google.android.material.textfield.TextInputEditText
                                 android:id="@+id/etHargaSatuan"
@@ -510,8 +545,8 @@
                         android:hint="Diskon"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                         app:suffixText="%"
-                        app:hintTextColor="#1565C0"
-                        app:boxStrokeColor="#1565C0">
+                        app:boxStrokeColor="@color/primary"
+                        app:hintTextColor="@color/primary">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etDiskon"
@@ -529,9 +564,9 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="Tambah Barang"
-                        android:textColor="#FFFFFF"
-                        android:backgroundTint="#0D47A1"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+                        android:textColor="@color/on_primary"
+                        android:backgroundTint="@color/primary"
+                        style="@style/Widget.MaterialComponents.Button"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -545,40 +580,7 @@
                 android:visibility="gone"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="4dp"
-                app:cardBackgroundColor="#E8F5E9">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    app:cardBackgroundColor="#E8F5E9">
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="📝 Daftar Barang"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="#1976D2"
-                        android:layout_marginBottom="12dp"/>
-
-                    <androidx.recyclerview.widget.RecyclerView
-                        android:id="@+id/rvBarang"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"/>
-
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Ringkasan -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="4dp"
-                app:cardBackgroundColor="#E8F5E9">
+                app:cardBackgroundColor="@color/tertiary_container">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -589,12 +591,47 @@
                     <TextView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:text="📝 Daftar Barang"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/on_tertiary_container"
+                        android:layout_marginBottom="12dp"/>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvBarang"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- RINGKASAN PEMBAYARAN -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardRingkasan"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="24dp"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="8dp"
+                app:cardBackgroundColor="@color/surface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <!-- Title -->
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
                         android:text="💰 Ringkasan Pembayaran"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:textColor="#2E7D32"
+                        android:textColor="@color/text_primary"
                         android:layout_marginBottom="16dp"/>
 
+                    <!-- Subtotal -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -607,7 +644,7 @@
                             android:layout_weight="1"
                             android:text="Sub Total"
                             android:textSize="14sp"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_secondary"/>
 
                         <TextView
                             android:id="@+id/tvSubTotal"
@@ -616,9 +653,10 @@
                             android:text="Rp 0"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_primary"/>
                     </LinearLayout>
 
+                    <!-- Diskon -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -631,7 +669,7 @@
                             android:layout_weight="1"
                             android:text="Diskon"
                             android:textSize="14sp"
-                            android:textColor="#F44336"/>
+                            android:textColor="@color/error"/>
 
                         <TextView
                             android:id="@+id/tvDiskonTotal"
@@ -640,19 +678,17 @@
                             android:text="- Rp 0"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#F44336"/>
+                            android:textColor="@color/error"/>
                     </LinearLayout>
 
+                    <!-- Input Pajak -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
+                        android:layout_marginBottom="12dp"
                         android:hint="Pajak"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:boxBackgroundColor="@android:color/white"
-                        app:suffixText="%"
-                        app:hintTextColor="#2E7D32"
-                        app:boxStrokeColor="#2E7D32">
+                        app:suffixText="%">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etPajak"
@@ -660,10 +696,10 @@
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
                             android:text="0"
-                            android:textColor="#000000"
-                            android:textColorHint="#1B5E20"/>
+                            android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
+                    <!-- Total Pajak -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -676,7 +712,7 @@
                             android:layout_weight="1"
                             android:text="Total Pajak"
                             android:textSize="14sp"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_secondary"/>
 
                         <TextView
                             android:id="@+id/tvPajak"
@@ -685,19 +721,17 @@
                             android:text="Rp 0"
                             android:textSize="14sp"
                             android:textStyle="bold"
-                            android:textColor="#424242"/>
+                            android:textColor="@color/text_primary"/>
                     </LinearLayout>
 
+                    <!-- Biaya Pengiriman -->
                     <com.google.android.material.textfield.TextInputLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="16dp"
+                        android:layout_marginBottom="12dp"
                         android:hint="Biaya Pengiriman"
                         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                        app:boxBackgroundColor="@android:color/white"
-                        app:prefixText="Rp "
-                        app:hintTextColor="#2E7D32"
-                        app:boxStrokeColor="#2E7D32">
+                        app:prefixText="Rp ">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/etBiayaPengiriman"
@@ -705,22 +739,24 @@
                             android:layout_height="wrap_content"
                             android:inputType="numberDecimal"
                             android:text="0"
-                            android:textColor="#000000"
-                            android:textColorHint="#1B5E20"/>
+                            android:textColor="@color/text_primary"/>
                     </com.google.android.material.textfield.TextInputLayout>
 
+
+                    <!-- Divider -->
                     <View
                         android:layout_width="match_parent"
-                        android:layout_height="2dp"
-                        android:background="#4CAF50"
+                        android:layout_height="1dp"
+                        android:background="@color/outline"
                         android:layout_marginBottom="12dp"/>
 
+                    <!-- TOTAL BAYAR -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:orientation="horizontal"
                         android:padding="12dp"
-                        android:background="@drawable/bg_total_rounded">
+                        android:background="@color/primary_container">
 
                         <TextView
                             android:layout_width="0dp"
@@ -729,7 +765,7 @@
                             android:text="TOTAL BAYAR"
                             android:textSize="18sp"
                             android:textStyle="bold"
-                            android:textColor="#2E7D32"/>
+                            android:textColor="@color/on_primary_container"/>
 
                         <TextView
                             android:id="@+id/tvTotal"
@@ -738,11 +774,12 @@
                             android:text="Rp 0"
                             android:textSize="20sp"
                             android:textStyle="bold"
-                            android:textColor="#2E7D32"/>
+                            android:textColor="@color/on_primary_container"/>
                     </LinearLayout>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
+
 
             <!-- Tombol Simpan -->
             <com.google.android.material.button.MaterialButton
@@ -750,9 +787,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:text="Simpan Invoice"
-                android:textColor="#FFFFFF"
                 android:textSize="18sp"
-                android:backgroundTint="@color/primary_color"/>
+                android:backgroundTint="@color/primary"
+                android:textColor="@color/on_primary"/>
+
 
         </LinearLayout>
 

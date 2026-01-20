@@ -1,18 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- Tema dasar aplikasi pakai Material Components Light -->
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
 
-        <!-- Warna utama aplikasi -->
-        <item name="colorPrimary">#1976D2</item>
-        <item name="colorPrimaryVariant">#1565C0</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
+        <!-- PRIMARY -->
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryVariant">@color/primary_dark</item>
+        <item name="colorOnPrimary">@color/on_primary</item>
 
-        <!-- Warna teks dan hint -->
-        <item name="android:textColor">#212121</item>          <!-- Teks utama -->
-        <item name="android:textColorHint">#555555</item>      <!-- Warna hint (placeholder) -->
-        <item name="colorOnSurface">#212121</item>             <!-- Warna teks pada surface -->
+        <!-- SECONDARY -->
+        <item name="colorSecondary">@color/secondary</item>
+        <item name="colorSecondaryVariant">@color/secondary_dark</item>
+        <item name="colorOnSecondary">@color/on_secondary</item>
 
-        <!-- Warna background utama -->
-        <item name="android:windowBackground">#FFFFFF</item>
+        <!-- SURFACE -->
+        <item name="android:windowBackground">@color/background</item>
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/on_surface</item>
+
+        <!-- ERROR -->
+        <item name="colorError">@color/error</item>
+        <item name="colorOnError">@color/on_error</item>
+
+        <!-- INPUT -->
+        <item name="colorControlActivated">@color/primary</item>
+        <item name="colorControlNormal">@color/outline</item>
+
+        <!-- BUTTON -->
+        <item name="materialButtonStyle">
+            @style/Widget.MaterialComponents.Button
+        </item>
+
     </style>
+
+
 </resources>

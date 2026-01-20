@@ -63,7 +63,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Daftar"
-            android:backgroundTint="@color/primary_color"
+            android:backgroundTint="#1565C0"
             android:textAllCaps="false"
             android:layout_marginTop="20dp"
             android:textColor="#FFFFFF"/>

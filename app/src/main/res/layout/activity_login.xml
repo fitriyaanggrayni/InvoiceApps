@@ -22,10 +22,11 @@
             android:layout_marginBottom="32dp">
 
             <ImageView
-                android:layout_width="140dp"
-                android:layout_height="140dp"
-                android:contentDescription="@string/app_name"
-                android:scaleType="fitCenter"
+                android:layout_width="251dp"
+                android:layout_height="79dp"
+                android:layout_marginBottom="12dp"
+                android:adjustViewBounds="true"
+                android:scaleType="centerInside"
                 android:src="@drawable/ic_logo" />
 
             <TextView
@@ -34,17 +35,27 @@
                 android:text="Selamat Datang"
                 android:textSize="26sp"
                 android:textStyle="bold"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/primary"
                 android:layout_marginBottom="4dp"
+                android:shadowColor="#80000000"
+                android:shadowDx="0"
+                android:shadowDy="2"
+                android:shadowRadius="4"
                 tools:ignore="HardcodedText" />
+
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Masuk untuk melanjutkan"
-                android:textColor="#E3F2FD"
                 android:textSize="15sp"
+                android:textColor="#455A64"
+                android:shadowColor="#80000000"
+                android:shadowDx="0"
+                android:shadowDy="1"
+                android:shadowRadius="2"
                 tools:ignore="HardcodedText" />
+
         </LinearLayout>
 
         <!-- Login Card -->
@@ -134,7 +145,7 @@
                     android:layout_gravity="end"
                     android:paddingVertical="8dp"
                     android:text="Lupa password?"
-                    android:textColor="@color/primary_color"
+                    android:backgroundTint="@color/primary"
                     android:textSize="13sp" />
 
                 <!-- Login Button -->
@@ -148,7 +159,7 @@
                     android:textAllCaps="false"
                     android:layout_marginTop="8dp"
                     app:cornerRadius="26dp"
-                    android:backgroundTint="@color/primary_color"
+                    android:backgroundTint="@color/primary"
                     android:textColor="#FFFFFF" />
 
             </LinearLayout>
@@ -166,17 +177,20 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Belum punya akun?"
-                android:textColor="#CCFFFFFF"
-                android:textSize="15sp" />
+                android:textColor="#444444"
+                android:textSize="14sp" />
 
             <TextView
                 android:id="@+id/textToRegister"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Daftar"
-                android:textSize="15sp"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold" />
+                android:text=" Daftar"
+                android:textColor="#1E88E5"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:clickable="true"
+                android:focusable="true" />
+
 
         </LinearLayout>
 
