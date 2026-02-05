@@ -111,7 +111,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             String[] pilihan = {
                     "Kasir 1",
                     "Kasir 2",
-                    "Kasir 3"
+                   /* "Kasir 3"  */
             };
 
             new androidx.appcompat.app.AlertDialog.Builder(this)
@@ -127,9 +127,9 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                             case 1:
                                 pdfUri = generatePdfKasir2();
                                 break;
-                            case 2:
+                            /* case 2:
                                 pdfUri = generatePdfKasir3();
-                                break;
+                                break; */
                         }
 
                         if (pdfUri == null) {
@@ -489,7 +489,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         return uri;
     }
 
-    private Uri generatePdfKasir2() {
+   /* private Uri generatePdfKasir2() {
         if (invoice == null || invoice.getItems() == null) {
             Toast.makeText(this, "Data invoice belum siap", Toast.LENGTH_SHORT).show();
             return null;
@@ -677,9 +677,9 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         float textWidth = paint.measureText(text);
         return colStart + ((colEnd - colStart - textWidth) / 2);
     }
+    */
 
-
-    private Uri generatePdfKasir3() {
+    private Uri generatePdfKasir2() {
         if (invoice == null || invoice.getItems() == null) {
             Toast.makeText(this, "Data invoice belum siap", Toast.LENGTH_SHORT).show();
             return null;
@@ -862,7 +862,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         // ================= SIMPAN =================
         ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME,
-                "Invoice_" + invoice.getNoInvoice() + "_Kasir3.pdf");
+                "Invoice_" + invoice.getNoInvoice() + "_Kasir2.pdf");
         values.put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf");
         values.put(MediaStore.MediaColumns.RELATIVE_PATH,
                 Environment.DIRECTORY_DOCUMENTS + "/Invoice Apps");

@@ -22,8 +22,8 @@
             android:layout_marginBottom="32dp">
 
             <ImageView
-                android:layout_width="251dp"
-                android:layout_height="79dp"
+                android:layout_width="243dp"
+                android:layout_height="72dp"
                 android:layout_marginBottom="12dp"
                 android:adjustViewBounds="true"
                 android:scaleType="centerInside"
