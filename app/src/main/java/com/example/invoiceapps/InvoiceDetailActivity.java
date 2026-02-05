@@ -947,17 +947,26 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, box);
 
 // Paint teks isi kotak (italic + bold)
-        Paint italicBold = new Paint();
+        Paint italicBold = new Paint(Paint.ANTI_ALIAS_FLAG);
         italicBold.setTextSize(11);
         italicBold.setFakeBoldText(true);
         italicBold.setTextSkewX(-0.25f); // italic
 
+// Padding dalam kotak
+        int paddingLeft = 80;
+        int paddingTop  = 16;
+
 // Tulis isi kotak
-        int textY = boxTop + 15;
+        int textY = boxTop + paddingTop;
         for (String lineText : lines) {
-            canvas.drawText(lineText, boxLeft + 5, textY, italicBold);
+            canvas.drawText(lineText, boxLeft + paddingLeft, textY, italicBold);
             textY += lineHeight;
         }
+
+
+// Update y setelah kotak
+        y = boxBottom + 10;
+
 
 // Update y setelah kotak
         y = boxBottom + 10;
@@ -1078,18 +1087,21 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(":", leftX + 80, y + 36, bold);
         canvas.drawText(alamat, leftX + 90, y + 36, normal);
 
-        // Invoice info kanan
+        int colonOffset = 8;
+
+// Invoice info kanan
         canvas.drawText("No Invoice", rightX, y, bold);
-        canvas.drawText(":", rightX + 100, y, bold);
-        canvas.drawText(invoice.getNoInvoice(), rightX + 110, y, normal);
+        canvas.drawText(":", rightX + 100 + colonOffset, y, bold);
+        canvas.drawText(invoice.getNoInvoice(), rightX + 110 + colonOffset, y, normal);
 
         canvas.drawText("Tanggal", rightX, y + 18, bold);
-        canvas.drawText(":", rightX + 100, y + 18, bold);
-        canvas.drawText(invoice.getTanggal(), rightX + 110, y + 18, normal);
+        canvas.drawText(":", rightX + 100 + colonOffset, y + 18, bold);
+        canvas.drawText(invoice.getTanggal(), rightX + 110 + colonOffset, y + 18, normal);
 
         canvas.drawText("Jenis Pembayaran", rightX, y + 36, bold);
-        canvas.drawText(":", rightX + 100, y + 36, bold);
-        canvas.drawText(jenisPembayaran, rightX + 110, y + 36, normal);
+        canvas.drawText(":", rightX + 100 + colonOffset, y + 36, bold);
+        canvas.drawText(jenisPembayaran, rightX + 110 + colonOffset, y + 36, normal);
+
     }
 
     private void drawSummary(Canvas c, String label, double value, int y) {

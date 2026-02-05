@@ -114,8 +114,9 @@ public class AddInvoiceActivity extends AppCompatActivity {
             if (invoiceId != null && !invoiceId.isEmpty()) {
                 setTitle(getString(R.string.edit_invoice));
                 btnSimpan.setText(getString(R.string.update_invoice));
-                etNoInvoice.setEnabled(false);
-                etNoInvoice.setFocusable(false);
+                etNoInvoice.setEnabled(true);
+                etNoInvoice.setFocusable(true);
+                etNoInvoice.setFocusableInTouchMode(true);
                 loadInvoiceForEdit(invoiceId);
             } else {
                 Toast.makeText(this, "Invoice ID tidak ditemukan untuk edit", Toast.LENGTH_SHORT).show();
