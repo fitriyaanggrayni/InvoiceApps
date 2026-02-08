@@ -9,11 +9,10 @@ android {
 
     defaultConfig {
         applicationId = "com.example.invoiceapps"
-        minSdk = 24
+        minSdk = 26
         targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -38,34 +37,40 @@ android {
 }
 
 dependencies {
-    // AndroidX & Material
+
+    // AndroidX
     implementation("androidx.appcompat:appcompat:1.6.1")
-    implementation("com.google.android.material:material:1.12.0") // versi terbaru stabil
+    implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.recyclerview:recyclerview:1.3.1")
     implementation("androidx.cardview:cardview:1.0.0")
     implementation("androidx.viewpager2:viewpager2:1.1.0")
     implementation("androidx.core:core-ktx:1.12.0")
-    implementation("androidx.activity:activity-ktx:1.8.2") // stabil dengan compileSdk 35
+    implementation("androidx.activity:activity-ktx:1.8.2")
 
-    // Firebase
+    // WAJIB untuk Firestore 26+
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+    // Firebase 
     implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
     implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-database-ktx")
+
+    // Firebase UI
     implementation("com.firebaseui:firebase-ui-firestore:8.0.0")
 
-    // Google Identity / Credentials
+    // Google Identity
     implementation("androidx.credentials:credentials:1.5.0")
     implementation("androidx.credentials:credentials-play-services-auth:1.5.0")
     implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
 
-    // GSON
-    implementation("com.google.code.gson:gson:2.10.1") // versi terbaru stabil
+    // Gson
+    implementation("com.google.code.gson:gson:2.10.1")
 
     // Navigation
-    implementation("androidx.navigation:navigation-fragment:2.5.3")
-    implementation("androidx.navigation:navigation-ui:2.5.3")
+    implementation("androidx.navigation:navigation-fragment-ktx:2.7.7")
+    implementation("androidx.navigation:navigation-ui-ktx:2.7.7")
 
     // Testing
     testImplementation("junit:junit:4.13.2")

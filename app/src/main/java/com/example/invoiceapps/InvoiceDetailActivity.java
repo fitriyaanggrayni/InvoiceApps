@@ -47,6 +47,11 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import android.widget.Toast;
+
+
 
 public class InvoiceDetailActivity extends AppCompatActivity {
 
@@ -105,36 +110,32 @@ public class InvoiceDetailActivity extends AppCompatActivity {
                 }
             });
 
-    private void uploadPdfToDrive(PdfDocument pdf, String fileName) {
+    private void uploadPdfToDrive(byte[] pdfBytes, String fileName) {
 
         new Thread(() -> {
             try {
-                // Convert PDF ke byte[]
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                pdf.writeTo(baos);
-                pdf.close();
-
-                String base64 = Base64.encodeToString(
-                        baos.toByteArray(),
-                        Base64.NO_WRAP
-                );
+                String base64 = Base64.encodeToString(pdfBytes, Base64.NO_WRAP);
 
                 URL url = new URL(
-                        "https://script.google.com/macros/s/AKfycbx72xaJHTLad6fk8MnA19ogL2Kq3FP4e1vGO396m3Feg3eQ1ohFIbsKUt1JAv-ZcuU/exec"
+                        "https://script.google.com/macros/s/AKfycbxsLJubgC9SyUPT75l1tLK7mYu10YXfvWzR0WFEbCtL59siy-JZpYtrLspLbC42kSu8/exec"
                 );
 
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
                 conn.setDoOutput(true);
-                conn.setConnectTimeout(20000);
-                conn.setReadTimeout(20000);
+                conn.setConnectTimeout(30000);
+                conn.setReadTimeout(30000);
+                conn.setRequestProperty("Content-Type", "application/json");
 
-                String body =
-                        "fileName=" + URLEncoder.encode(fileName, "UTF-8") +
-                                "&file=" + URLEncoder.encode(base64, "UTF-8");
+                // JSON BODY
+                String jsonBody =
+                        "{"
+                                + "\"fileName\":\"" + fileName + "\","
+                                + "\"file\":\"" + base64 + "\""
+                                + "}";
 
                 OutputStream os = conn.getOutputStream();
-                os.write(body.getBytes());
+                os.write(jsonBody.getBytes("UTF-8"));
                 os.flush();
                 os.close();
 
@@ -142,28 +143,22 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
                 runOnUiThread(() -> {
                     if (responseCode == 200) {
-                        Toast.makeText(
-                                this,
-                                "PDF berhasil disimpan di Google Drive / Invoice",
-                                Toast.LENGTH_LONG
-                        ).show();
+                        Toast.makeText(this,
+                                "PDF berhasil diupload ke Google Drive",
+                                Toast.LENGTH_LONG).show();
                     } else {
-                        Toast.makeText(
-                                this,
-                                "Upload gagal (kode " + responseCode + ")",
-                                Toast.LENGTH_LONG
-                        ).show();
+                        Toast.makeText(this,
+                                "Upload gagal (" + responseCode + ")",
+                                Toast.LENGTH_LONG).show();
                     }
                 });
 
             } catch (Exception e) {
                 e.printStackTrace();
                 runOnUiThread(() ->
-                        Toast.makeText(
-                                this,
-                                "Gagal upload PDF ke Drive",
-                                Toast.LENGTH_LONG
-                        ).show()
+                        Toast.makeText(this,
+                                "Error upload PDF: " + e.getMessage(),
+                                Toast.LENGTH_LONG).show()
                 );
             }
         }).start();
@@ -569,10 +564,23 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             pdf.finishPage(page);
 
             // ================= SAVE FILE =================
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+            try {
+                pdf.writeTo(baos);
+            } catch (IOException e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_LONG).show();
+                return;
+            } finally {
+                pdf.close();
+            }
+
             uploadPdfToDrive(
-                    pdf,
+                    baos.toByteArray(),
                     "Invoice_" + invoice.getNoInvoice() + ".pdf"
             );
+
 
 
         } catch (Exception e) {
@@ -761,8 +769,20 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         pdf.finishPage(page);
         // ================= SAVE FILE =================
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try {
+            pdf.writeTo(baos);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_LONG).show();
+            return;
+        } finally {
+            pdf.close();
+        }
+
         uploadPdfToDrive(
-                pdf,
+                baos.toByteArray(),
                 "Invoice_" + invoice.getNoInvoice() + ".pdf"
         );
 
@@ -806,6 +826,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
     }
 
     private void generatePdfKasir3() {
+
         if (invoice == null || invoice.getItems() == null) {
             Toast.makeText(this, "Data invoice belum siap", Toast.LENGTH_SHORT).show();
             return;
@@ -813,17 +834,17 @@ public class InvoiceDetailActivity extends AppCompatActivity {
 
         PdfDocument pdf = new PdfDocument();
 
-        Paint normal = new Paint();
-        Paint bold = new Paint();
-        Paint header = new Paint();
-        Paint line = new Paint();
+        Paint normal = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint bold = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint header = new Paint(Paint.ANTI_ALIAS_FLAG);
+        Paint linePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 
         normal.setTextSize(11);
         bold.setTextSize(12);
         bold.setFakeBoldText(true);
         header.setTextSize(11);
         header.setFakeBoldText(true);
-        line.setStrokeWidth(2);
+        linePaint.setStrokeWidth(2);
 
         PdfDocument.Page page = pdf.startPage(
                 new PdfDocument.PageInfo.Builder(595, 842, 1).create()
@@ -842,7 +863,6 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText(namaToko, 40, y, bold);
         canvas.drawText(alamatToko, 40, y + 15, normal);
         canvas.drawText("Telp : " + telpToko, 40, y + 30, normal);
-
         y += 60;
 
         // ================= KEPADA + INFO INVOICE =================
@@ -855,10 +875,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         int rightX = 330;
         canvas.drawText("No Invoice", rightX, y, normal);
         canvas.drawText(": " + invoice.getNoInvoice(), rightX + 80, y, normal);
-
         canvas.drawText("Tanggal", rightX, y + 15, normal);
         canvas.drawText(": " + invoice.getTanggal(), rightX + 80, y + 15, normal);
-
         canvas.drawText("Payment", rightX, y + 30, normal);
         canvas.drawText(": " + jenisPembayaran, rightX + 80, y + 30, normal);
 
@@ -867,7 +885,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         // ================= TABEL =================
         int[] col = {40, 80, 280, 360, 450};
 
-        canvas.drawLine(40, y, 555, y, line);
+        canvas.drawLine(40, y, 555, y, linePaint);
         y += 18;
 
         canvas.drawText("No", col[0], y, header);
@@ -877,7 +895,7 @@ public class InvoiceDetailActivity extends AppCompatActivity {
         canvas.drawText("Total", col[4], y, header);
 
         y += 8;
-        canvas.drawLine(40, y, 555, y, line);
+        canvas.drawLine(40, y, 555, y, linePaint);
         y += 18;
 
         int no = 1;
@@ -893,31 +911,46 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             y += 18;
         }
 
-        // Garis bawah tabel
-        canvas.drawLine(40, y, 555, y, line);
-        y += 10; // jarak sebelum Total
+        canvas.drawLine(40, y, 555, y, linePaint);
+        y += 10;
 
-// ================= TERBILANG =================
-
+        // ================= TERBILANG =================
         String terbilangText = angkaKeTerbilang((long) invoice.getTotal());
         if (terbilangText == null || terbilangText.trim().isEmpty()) {
             terbilangText = "-";
         }
 
-        int maxCharPerLine = 25;
         int lineHeight = 15;
+        int boxLeft = 40;
+        int boxRight = 350;
+        int boxTop = y + 18;
 
-// Pecah teks berdasarkan KATA (spasi)
+        int paddingLeft = 55;
+        int paddingRight = 10;
+        int paddingTop = 16;
+
+        Paint italicBold = new Paint(Paint.ANTI_ALIAS_FLAG);
+        italicBold.setTextSize(11);
+        italicBold.setFakeBoldText(true);
+        italicBold.setTextSkewX(-0.15f); // aman emulator
+
+        float maxTextWidth = boxRight - boxLeft - paddingLeft - paddingRight;
+
         List<String> lines = new ArrayList<>();
         StringBuilder currentLine = new StringBuilder();
 
         for (String word : terbilangText.split(" ")) {
-            if (currentLine.length() + word.length() + 1 <= maxCharPerLine) {
-                if (currentLine.length() > 0) currentLine.append(" ");
-                currentLine.append(word);
+            String testLine = currentLine.length() == 0
+                    ? word
+                    : currentLine + " " + word;
+
+            if (italicBold.measureText(testLine) <= maxTextWidth) {
+                currentLine.setLength(0);
+                currentLine.append(testLine);
             } else {
                 lines.add(currentLine.toString());
-                currentLine = new StringBuilder(word);
+                currentLine.setLength(0);
+                currentLine.append(word);
             }
         }
 
@@ -925,80 +958,69 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             lines.add(currentLine.toString());
         }
 
-// Tambahkan " Rupiah" ke BARIS TERAKHIR
         int lastIndex = lines.size() - 1;
-        String lastLine = lines.get(lastIndex).trim();
-        lines.set(lastIndex, lastLine + " Rupiah");
+        lines.set(lastIndex, lines.get(lastIndex) + " Rupiah");
 
-// Posisi kotak
-        int boxLeft = 40;
-        int boxTop = y + 18;
-        int boxRight = 350;
-        int boxBottom = boxTop + (lines.size() * lineHeight) + 10;
+        int boxBottom = boxTop + (lines.size() * lineHeight) + paddingTop;
 
-// Label "Terbilang:" (di luar kotak)
         bold.setTextSize(11);
         canvas.drawText("Terbilang:", boxLeft, y + 12, bold);
 
-// Gambar kotak
-        Paint box = new Paint();
-        box.setStyle(Paint.Style.STROKE);
-        box.setStrokeWidth(2);
-        canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, box);
+        Paint boxPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        boxPaint.setStyle(Paint.Style.STROKE);
+        boxPaint.setStrokeWidth(2);
+        canvas.drawRect(boxLeft, boxTop, boxRight, boxBottom, boxPaint);
 
-// Paint teks isi kotak (italic + bold)
-        Paint italicBold = new Paint(Paint.ANTI_ALIAS_FLAG);
-        italicBold.setTextSize(11);
-        italicBold.setFakeBoldText(true);
-        italicBold.setTextSkewX(-0.25f); // italic
-
-// Padding dalam kotak
-        int paddingLeft = 80;
-        int paddingTop  = 16;
-
-// Tulis isi kotak
+        int safeOffset = 3;
         int textY = boxTop + paddingTop;
-        for (String lineText : lines) {
-            canvas.drawText(lineText, boxLeft + paddingLeft, textY, italicBold);
+
+        for (String textLine : lines) {
+            canvas.drawText(
+                    textLine,
+                    boxLeft + paddingLeft + safeOffset,
+                    textY,
+                    italicBold
+            );
             textY += lineHeight;
         }
 
-
-// Update y setelah kotak
         y = boxBottom + 10;
 
-
-// Update y setelah kotak
-        y = boxBottom + 10;
-
-
-
-// ================= TOTAL =================
-// Total di sebelah kanan kotak, sejajar dengan kotak tapi lebih dinaikkan
+        // ================= TOTAL =================
         bold.setTextSize(12);
-        int totalY = boxTop + (boxBottom - boxTop) / 2 - 12; // dikurangi 12px agar naik lebih tinggi
-        canvas.drawText("Total:", col[3], totalY, bold);
-        canvas.drawText(rupiah(invoice.getTotal()), col[4], totalY, bold);
-
-
-// Update y untuk TTD
-        y = boxBottom + 20;
+        canvas.drawText("Total:", col[3], boxTop + 30, bold);
+        canvas.drawText(rupiah(invoice.getTotal()), col[4], boxTop + 30, bold);
 
         // ================= TTD =================
+        y += 30;
         canvas.drawText("Diterima oleh,", 80, y, normal);
         canvas.drawText("Hormat kami,", 380, y, normal);
 
         y += 60;
-        canvas.drawLine(60, y, 180, y, line);
-        canvas.drawLine(360, y, 500, y, line);
+        canvas.drawLine(60, y, 180, y, linePaint);
+        canvas.drawLine(360, y, 500, y, linePaint);
 
         pdf.finishPage(page);
 
-        // ================= SAVE FILE =================
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+        try {
+            pdf.writeTo(baos);
+        } catch (IOException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "Gagal membuat PDF", Toast.LENGTH_LONG).show();
+            return;
+        } finally {
+            pdf.close();
+        }
+
         uploadPdfToDrive(
-                pdf,
+                baos.toByteArray(),
                 "Invoice_" + invoice.getNoInvoice() + ".pdf"
         );
+
+    }
+
         // ================= SIMPAN =================
       /*  ContentValues values = new ContentValues();
         values.put(MediaStore.MediaColumns.DISPLAY_NAME,
@@ -1021,8 +1043,8 @@ public class InvoiceDetailActivity extends AppCompatActivity {
             pdf.close();
         }
 
-        return uri;  */
-    }
+        return uri;
+    }*/
 
 
 
